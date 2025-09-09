@@ -31,6 +31,8 @@ from microhhpy.spatial import Domain, plot_domains
 from microhhpy.utils import check_domain_decomposition
 from microhhpy.constants import xm_cams
 
+from corso_emission import Corso_emissions
+
 
 """
 Case settings.
@@ -55,6 +57,7 @@ env_eddy = {
     'tuv_path': '/home/bart/meteo/models/microhhpy/external/TUV/V5.4',
     'gpt_path': '/home/bart/meteo/models/coefficients_veerman',
     'cdsapirc': '/home/bart/.cdsapirc',
+    'corso_path': '/home/scratch1/bart/emissions/corso',
     'work_path': '.'
 }
 
@@ -66,10 +69,11 @@ env_snellius = {
     'tuv_path': '/home/stratum2/meteo/models/microhhpy/external/TUV/V5.4',
     'gpt_path': '/home/stratum2/meteo/models/coefficients_veerman',
     'cdsapirc': '/home/stratum2/.cdsapirc',
+    'corso_path': '',
     'work_path': '/gpfs/work2/0/nwo21036/bart/CORSO/vinh_tan/'
 }
 
-env = env_snellius
+env = env_eddy
 
 
 """
@@ -216,6 +220,7 @@ def to_kg_s(kty):
     """
     return kty * 1e6 / 365.25 / 24 / 3600
 
+"""
 no_no2_ratio = 0.95
 
 sigma_x = outer_dom.dx / 3.
@@ -246,6 +251,12 @@ emissions.append( dict(specie='no',  lat=lat_e, lon=lon_e, z=100, sigma_x=sigma_
 emissions.append( dict(specie='no2', lat=lat_e, lon=lon_e, z=100, sigma_x=sigma_x, sigma_y=sigma_y, sigma_z=sigma_z, strength=no2_emission) )
 emissions.append( dict(specie='co',  lat=lat_e, lon=lon_e, z=100, sigma_x=sigma_x, sigma_y=sigma_y, sigma_z=sigma_z, strength=co_emission ) )
 emissions.append( dict(specie='co2', lat=lat_e, lon=lon_e, z=100, sigma_x=sigma_x, sigma_y=sigma_y, sigma_z=sigma_z, strength=co2_emission) )
+"""
+
+
+
+
+
 
 
 """
@@ -303,15 +314,26 @@ lumping_species = {
         #'ro2':  ['ch3o2', 'c2o3', 'aco2', 'ic3h7o2', 'hypropo2']}   # Last two species not available in ADS.
         'ro2':  ['ch3o2', 'c2o3', 'aco2']}
 
-# Debug without KPP..
-#chemical_species = ['no', 'no2']
-#lumping_species = {}
-
 
 if __name__ == '__main__':
 
-    # Only plot domain if settings script is called directly.
-    plot_domains([outer_dom, inner_dom], scatter_lon=[lon_e], scatter_lat=[lat_e], use_projection=True)
+    margin = 0.1    # ~10 km
+
+    lon_min = outer_dom.proj.lon.min() + margin
+    lon_max = outer_dom.proj.lon.max() - margin
+
+    lat_min = outer_dom.proj.lat.min() + margin
+    lat_max = outer_dom.proj.lat.max() - margin
+
+    emiss = Corso_emissions(env['corso_path'])
+    emiss.filter_emissions(lon_min, lon_max, lat_min, lat_max)
+
+    # Plot domains and emissions.
+    plot_domains(
+        [outer_dom, inner_dom],
+        scatter_lon=emiss.df_emiss.longitude,
+        scatter_lat=emiss.df_emiss.latitude,
+        use_projection=True)
 
     # Check domain decomposition.
     for d in domains:
