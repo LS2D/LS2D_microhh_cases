@@ -158,15 +158,17 @@ if __name__ == '__main__':
     row = e.df_emiss.iloc[4]    
     name = row.name
 
-    #dates = pd.date_range('2020-01-01T00:00', '2021-01-01T00:00', freq='3h')
-    dates = pd.date_range('2020-01-01T00:00', '2020-03-01T00:00', freq='1h')
+    dates = pd.date_range('2020-01-01T00:00', '2020-04-01T00:00', freq='1h')
 
     em1 = e.get_emission_tser(name, 'co2', dates, interpolate_month=True)
     em2 = e.get_emission_tser(name, 'co2', dates, interpolate_month=False)
 
-    plt.figure()
-    plt.subplot(121)
+    plt.figure(figsize=(6,5), layout='constrained')
+
+    plt.subplot(211)
+    plt.title('Linear interpolation monthly values', loc='left')
     plt.plot(dates, em1)
 
-    plt.subplot(122)
+    plt.subplot(212)
+    plt.title('NN interpolation monthly values', loc='left')
     plt.plot(dates, em2)
