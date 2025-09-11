@@ -62,14 +62,14 @@ env_eddy = {
 }
 
 env_snellius = {
-    'era5_path': '/gpfs/work3/0/lesmodels/ls2d_era5',
-    'cams_path': '/gpfs/work3/0/lesmodels/ls2d_cams',
-    'lcc_path': '/gpfs/work3/0/lesmodels/ls2d_spatial_data/lcc/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif',
+    'era5_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_era5',
+    'cams_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_cams',
+    'lcc_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_spatial_data/lcc/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif',
     'microhh_path': '/home/stratum2/meteo/models/microhh',
     'tuv_path': '/home/stratum2/meteo/models/microhhpy/external/TUV/V5.4',
     'gpt_path': '/home/stratum2/meteo/models/coefficients_veerman',
     'cdsapirc': '/home/stratum2/.cdsapirc',
-    'corso_path': '',
+    'corso_path': '/gpfs/work3/0/lesmodels/team_bart/emissions/corso',
     'work_path': '/gpfs/work2/0/nwo21036/bart/CORSO/vinh_tan/'
 }
 
@@ -118,15 +118,15 @@ if sw_debug:
         lon = 108.83,
         lat = 11.34,
         anchor = 'center',
-        start_date = datetime(year=2021, month=3, day=3, hour=6),
-        end_date = datetime(year=2021, month=3, day=3, hour=8),
+        start_date = datetime(year=2021, month=3, day=4, hour=0),
+        end_date = datetime(year=2021, month=3, day=5, hour=0),
         proj_str = proj_str,
         work_dir = f'{env["work_path"]}/outer'
         )
 
     # Cheating
-    outer_dom.npx = 2
-    outer_dom.npy = 4
+    outer_dom.npx = 8
+    outer_dom.npy = 8
 
     inner_dom = Domain(
         xsize = 12_800,
@@ -140,13 +140,13 @@ if sw_debug:
         parent = outer_dom,
         xstart_in_parent = 1600,
         ystart_in_parent = 1600,
-        start_date = datetime(year=2021, month=3, day=3, hour=7),
-        end_date = datetime(year=2021, month=3, day=3, hour=8),
+        start_date = datetime(year=2021, month=3, day=4, hour=12),
+        end_date = datetime(year=2021, month=3, day=5, hour=0),
         work_dir = f'{env["work_path"]}/inner'
         )
 
-    inner_dom.npx = 2
-    inner_dom.npy = 4
+    inner_dom.npx = 8
+    inner_dom.npy = 8
 
     outer_dom.child = inner_dom
 
