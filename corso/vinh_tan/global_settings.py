@@ -43,7 +43,7 @@ float_type = np.float64       # KPP does not support float32.
 sw_openbc = True        # Use open or periodic boundaries.
 sw_scalars = True       # Include all scalars used by chemistry.
 sw_chemistry = True     # Use KPP chemistry (TODO).
-sw_debug = True        # Debug mini domain.
+sw_debug = False        # Debug mini domain.
 
 
 """
@@ -73,7 +73,7 @@ env_snellius = {
     'work_path': '/gpfs/work2/0/nwo21036/bart/CORSO/vinh_tan/'
 }
 
-env = env_eddy
+env = env_snellius
 
 
 """
@@ -166,8 +166,8 @@ else:
         lon=108.75,
         lat=11.25,
         anchor='center',
-        start_date = datetime(year=2021, month=3, day=3, hour=0),
-        end_date = datetime(year=2021, month=3, day=3, hour=12),
+        start_date = datetime(year=2021, month=3, day=3, hour=12),
+        end_date = datetime(year=2021, month=3, day=6, hour=0),
         proj_str=proj_str,
         work_dir=f'{env["work_path"]}/outer'
         )
@@ -188,8 +188,8 @@ else:
         parent=outer_dom,
         xstart_in_parent=3000,
         ystart_in_parent=3000,
-        start_date = datetime(year=2021, month=3, day=3, hour=3),
-        end_date = datetime(year=2021, month=3, day=3, hour=12),
+        start_date = datetime(year=2021, month=3, day=3, hour=21),
+        end_date = datetime(year=2021, month=3, day=6, hour=0),
         work_dir=f'{env["work_path"]}/inner'
         )
 
