@@ -18,12 +18,13 @@
 # along with LS2D.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from datetime import datetime
+from datetime import timedelta
 import argparse
 import shutil
 import sys
 import os
 
+import pandas as pd
 import numpy as np
 
 # pip install ls2d
@@ -36,7 +37,7 @@ from microhhpy.real import regrid_les, link_bcs_from_parent, link_buffer_from_pa
 from microhhpy.land import create_land_surface_input, Land_surface_input
 from microhhpy.thermo import calc_moist_basestate, save_basestate_density, read_basestate_density
 from microhhpy.io import read_ini, check_ini, save_ini, save_case_input
-from microhhpy.chem import get_rfmip_species
+from microhhpy.chem import get_rfmip_species, fit_gaussian_curve
 from microhhpy.spatial import calc_vertical_grid_2nd
 from microhhpy.chem import calc_tuv_photolysis
 from microhhpy.utils import get_data_file
@@ -46,7 +47,8 @@ from microhhpy.constants import xm_cams
 # Local settings and scripts.
 from global_settings import sw_openbc, sw_scalars, sw_chemistry
 from global_settings import float_type, ls2d_settings, env, outer_dom, inner_dom, vgrid, zstart_buffer
-from global_settings import cams_variables, chemical_species, lumping_species, emissions
+from global_settings import cams_eac4_variables, chemical_species, lumping_species
+from corso_emissions import Corso_emissions
 
 
 def parse_args():
@@ -257,7 +259,7 @@ def init_and_bcs_inner(domain, bs, vgrid):
         time_offset)
 
 
-def create_case_input(era5_1d, era5_1d_mean, df_tuv, domain, case_name):
+def create_nc_input(era5_1d, era5_1d_mean, df_tuv, emissions, domain, case_name):
     """
     Create `case_input.nc` file.
     """
@@ -329,16 +331,25 @@ def create_case_input(era5_1d, era5_1d_mean, df_tuv, domain, case_name):
     else:
         tdep_chem = None
 
+    # Time dependent emissions.
+    endtime = (domain.end_date - domain.start_date).total_seconds()
+
+    tdep_source = {'time_source': np.arange(0, endtime+1, 3600)}
+    for n,e in enumerate(emissions):
+        tdep_source[f'source_strength_{n}'] = e['strength']
+
+    # Save in NetCDF format.
     save_case_input(
         case_name = case_name,
         init_profiles = init_profiles,
         radiation = radiation,
         soil = soil,
         tdep_chem = tdep_chem,
+        tdep_source = tdep_source,
         output_dir = domain.work_dir)
 
 
-def create_ini(start_date, end_date, domain, case_name):
+def create_ini(domain, emissions, case_name):
     """
     Read base .ini file and fill in details.
     """
@@ -376,8 +387,8 @@ def create_ini(start_date, end_date, domain, case_name):
     ini['advec']['fluxlimit_list'] = ['qt'] + scalars
     ini['limiter']['limitlist'] = ['qt'] + scalars
 
-    ini['time']['endtime'] = (end_date - start_date).total_seconds()
-    ini['time']['datetime_utc'] = start_date.strftime('%Y-%m-%d %H:%M:%S')
+    ini['time']['endtime'] = (domain.end_date - domain.start_date).total_seconds()
+    ini['time']['datetime_utc'] = domain.start_date.strftime('%Y-%m-%d %H:%M:%S')
 
     # Emissions from lat/lon to x/y.
     for e in emissions:
@@ -392,7 +403,8 @@ def create_ini(start_date, end_date, domain, case_name):
         ini['source']['sigma_x'] = [e['sigma_x'] for e in emissions]
         ini['source']['sigma_y'] = [e['sigma_y'] for e in emissions]
         ini['source']['sigma_z'] = [e['sigma_z'] for e in emissions]
-        ini['source']['strength'] = [e['strength'] for e in emissions]
+        ini['source']['strength'] = len(emissions)*[-1]
+        #ini['source']['strength'] = [e['strength'] for e in emissions]
         ini['source']['swvmr'] = [True for e in emissions]
         ini['source']['line_x'] = [0 for e in emissions]
         ini['source']['line_y'] = [0 for e in emissions]
@@ -525,6 +537,74 @@ def calc_photolysis_rates(env, domain):
     return tuv_df
 
 
+def create_emissions(domain, env, sigma_x=100, sigma_y=100, no_no2_ratio=0.95):
+    """
+    Get all time varying emissions from CORSO catalogue within domain.
+    """
+
+    dates = pd.date_range(domain.start_date, domain.end_date, freq='1h')
+
+    e = Corso_emissions(env['corso_path'])
+
+    margin = 0.05    # ~5 km
+
+    min_lon = domain.proj.lon.min() + margin
+    max_lon = domain.proj.lon.max() - margin
+
+    min_lat = domain.proj.lat.min() + margin
+    max_lat = domain.proj.lat.max() - margin
+
+    e.filter_emissions(min_lon, max_lon, min_lat, max_lat)
+
+    # Gather emission info in list of dicts, to pass
+    # to `create_ini()` and `create_nc_input()` functions.
+    emissions = []
+
+    for index, row in e.df_emiss.iterrows():
+
+        # Get vertical distribution and fit Gaussian curve.
+        # MicroHH currently does not support vertical profiles
+        # combined with time varying strength.
+        z_emiss, p_emiss = e.get_profile(index)
+        curve_fit = fit_gaussian_curve(z_emiss, p_emiss)
+
+        def add_emission(specie, strength):
+            # Input = kg/s, output for KPP = kmol/s.
+            strength /= xm_cams[specie]
+
+            emissions.append(
+                dict(
+                    specie=specie,
+                    lat=row.latitude,
+                    lon=row.longitude,
+                    z=curve_fit['x0'],
+                    sigma_x=sigma_x,
+                    sigma_y=sigma_y,
+                    sigma_z=curve_fit['sigma'],
+                    strength=strength
+                ))
+
+        # Get emissions as function of time for each specie.
+        for specie in ('co', 'co2', 'nox'):
+
+            strength = e.get_emission_tser(index, specie, dates)    # Units `kg/s`.
+
+            if specie == 'nox':
+                # Split NOx in to NO and NO2.
+                no_strength = strength * no_no2_ratio * (xm_cams['no'] / xm_cams['no2'])
+                no2_strength = strength * (1 - no_no2_ratio)
+
+                add_emission('no', no_strength)
+                add_emission('no2', no2_strength)
+
+            else:
+                add_emission(specie, strength)
+
+    logger.info(f'Found {len(e.df_emiss)} emission(s) in domain.')
+
+    return emissions
+
+
 def copy_lookup_tables(env, domain):
     """
     Copy required land-surface and radiation lookup tables.
@@ -565,7 +645,7 @@ def main():
 
     # Initial / boundary conditions from ERA5 / CAMS using (LS)2D.
     era5_3d, era5_1d, era5_1d_mean, cams_3d = read_era5_cams(
-        ls2d_settings, domain.start_date, domain.end_date, cams_variables, vgrid)
+        ls2d_settings, domain.start_date, domain.end_date, cams_eac4_variables, vgrid)
 
     if args.domain == 'outer':
         # Create base state density.
@@ -584,6 +664,9 @@ def main():
     # Save basestate density.
     save_basestate_density(bs['rho'], bs['rhoh'], f'{domain.work_dir}/rhoref_ext.0000000')
 
+    # Setup emissions from corso_ps_catalogue_v2.0 and corso_ps_* time/vertical profiles.
+    emissions = create_emissions(domain, env, sigma_x=100, sigma_y=100, no_no2_ratio=0.95)
+
     # Calculate photolysis rates for KPP
     if sw_chemistry:
         df_tuv = calc_photolysis_rates(env, domain)
@@ -591,10 +674,10 @@ def main():
         df_tuv = None
 
     # Create `case_input.nc` NetCDF file.
-    create_case_input(era5_1d, era5_1d_mean, df_tuv, domain, ls2d_settings['case_name'])
+    create_nc_input(era5_1d, era5_1d_mean, df_tuv, emissions, domain, ls2d_settings['case_name'])
 
     # Create `case.ini` from `case.ini.base`, filling in details.
-    create_ini(domain.start_date, domain.end_date, domain, ls2d_settings['case_name'])
+    create_ini(domain, emissions, ls2d_settings['case_name'])
 
     # Create land-surface (vegetation) and sea (SST) input.
     create_surface_input(era5_3d, era5_1d_mean, domain, env)

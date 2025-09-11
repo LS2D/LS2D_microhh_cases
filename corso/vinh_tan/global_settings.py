@@ -31,7 +31,7 @@ from microhhpy.spatial import Domain, plot_domains
 from microhhpy.utils import check_domain_decomposition
 from microhhpy.constants import xm_cams
 
-from corso_emission import Corso_emissions
+from corso_emissions import Corso_emissions
 
 
 """
@@ -43,7 +43,7 @@ float_type = np.float64       # KPP does not support float32.
 sw_openbc = True        # Use open or periodic boundaries.
 sw_scalars = True       # Include all scalars used by chemistry.
 sw_chemistry = True     # Use KPP chemistry (TODO).
-sw_debug = False        # Debug mini domain.
+sw_debug = True        # Debug mini domain.
 
 
 """
@@ -213,50 +213,8 @@ zstart_buffer = 0.75 * vgrid.zsize
 
 """
 Emissions.
+Emissions of CO2/NOx/CO are automatically determined from the CORSO emission database.
 """
-def to_kg_s(kty):
-    """
-    Convert `kiloton / year` to `kg / second`.
-    """
-    return kty * 1e6 / 365.25 / 24 / 3600
-
-"""
-no_no2_ratio = 0.95
-
-sigma_x = outer_dom.dx / 3.
-sigma_y = outer_dom.dy / 3.
-sigma_z = 25
-
-# From: corso_ps_catalogue_v2.0.csv
-#                                                            CO2               CH4                NOx               SOx              CO
-# 17156;VNM;Vinh Tan power station;power;coal;108.808;11.317;24603.25805655359;0.2507134359554518;27.85070232963244;51.1451836651249;14.083783877365631;VP_09009;M_POW_177;W_POW_175;H_POW_175
-co2_emiss_kg = to_kg_s(24603.25805655359)
-nox_emiss_kg = to_kg_s(27.85070232963244)
-co_emiss_kg  = to_kg_s(14.083783877365631)
-
-no_emiss_kg = nox_emiss_kg * no_no2_ratio * (xm_cams['no'] / xm_cams['no2'])
-no2_emiss_kg = nox_emiss_kg * (1 - no_no2_ratio)
-
-no_emission = no_emiss_kg / xm_cams['no']
-no2_emission = no2_emiss_kg / xm_cams['no2']
-co_emission = co_emiss_kg / xm_cams['co']
-co2_emission = co2_emiss_kg / xm_cams['co2']
-
-# Lat/lon of power station
-lat_e = 11.317
-lon_e = 108.808
-
-emissions = []
-emissions.append( dict(specie='no',  lat=lat_e, lon=lon_e, z=100, sigma_x=sigma_x, sigma_y=sigma_y, sigma_z=sigma_z, strength=no_emission ) )
-emissions.append( dict(specie='no2', lat=lat_e, lon=lon_e, z=100, sigma_x=sigma_x, sigma_y=sigma_y, sigma_z=sigma_z, strength=no2_emission) )
-emissions.append( dict(specie='co',  lat=lat_e, lon=lon_e, z=100, sigma_x=sigma_x, sigma_y=sigma_y, sigma_z=sigma_z, strength=co_emission ) )
-emissions.append( dict(specie='co2', lat=lat_e, lon=lon_e, z=100, sigma_x=sigma_x, sigma_y=sigma_y, sigma_z=sigma_z, strength=co2_emission) )
-"""
-
-
-
-
-
 
 
 """

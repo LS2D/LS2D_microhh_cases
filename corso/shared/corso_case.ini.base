@@ -185,6 +185,8 @@ limitlist=None
 
 [source]
 swsource=None
+swtimedep_strength=true
+
 #sourcelist=None
 #source_x0=None
 #source_y0=None

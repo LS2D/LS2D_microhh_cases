@@ -1,1 +1,0 @@
-../shared/corso_emission.py
