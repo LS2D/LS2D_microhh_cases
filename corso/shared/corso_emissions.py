@@ -1,18 +1,24 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-import calendar
 from scipy.interpolate import interp1d
 
 
-def cyclic_interp(values, query_value):
+def interp_monthly_values(monthly_values, date):
     """
-    Interpolate monthly value using periodic boundary conditions.
+    Interpolate monthly values (assumed to be valid ~mid month) to requested `date`.
     """
-    x = np.arange(0.5, 13, 1)
-    y = np.append(values, values[0])
-    wrapped = 0.5 + (query_value - 0.5) % 12.0
-    return interp1d(x, y, kind='linear')(wrapped)
+    month_centers = np.array([15, 45, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349])
+
+    # Make values cyclic.
+    days = np.append(month_centers, 365)
+    values = np.append(monthly_values, monthly_values[0])
+
+    # Compute fractional day of year.
+    day_of_year = date.timetuple().tm_yday + (date.hour / 24.0 + date.minute / 1440.0 + date.second / 86400.0)
+
+    # Return linearly interpolated value.
+    return float(np.interp(day_of_year, days, values))
 
 
 class Corso_emissions:
@@ -45,6 +51,22 @@ class Corso_emissions:
         self.df_emiss = self.df_emiss[mask]
 
 
+    def get_emissions(self, id, specie, dates, interpolate_month=True):
+        """
+        Wrapper for `get_emission()`, which accepts a wide range of
+        date formats, lists/arrays, etc.
+        """
+
+        # Cast dates to `datetime` format.
+        dates = pd.to_datetime(dates)
+
+        emission = np.zeros(len(dates))
+        for i, date in enumerate(dates):
+            emission[i] = self.get_emission(id, specie, date, interpolate_month)
+
+        return emission
+
+
     def get_emission(self, id, specie, date, interpolate_month=True):
         """
         Get emission for requested location and specie, with scaling from time profiles applied.
@@ -59,9 +81,6 @@ class Corso_emissions:
         index_month = date.month - 1
         index_day = date.weekday()
         index_hour = date.hour
-
-        # Days per month.
-        days_per_month = calendar.monthrange(date.year, date.month)[1]
 
         # Filter Dataframe on emission ID.
         dfs = self.df_emiss.loc[id]
@@ -84,20 +103,20 @@ class Corso_emissions:
 
         # Emission in kg / month.
         if interpolate_month:
-            month_frac = index_month + date.day / days_per_month
-            month_scale_fac = cyclic_interp(prof_month, month_frac)
+            month_scale_fac = interp_monthly_values(prof_month, date)
             emiss_m = emiss_y * month_scale_fac / 12.
         else:
             emiss_m = emiss_y * prof_month[index_month] / 12.
 
         # Emission in kg / day.
+        days_per_month = 365.25 / 12
         emiss_d = emiss_m / days_per_month * prof_week[index_day]
 
         # Emission in kg / hour.
         emiss_h = emiss_d * prof_hour[index_hour] / 24.
 
         # Check: OKAY!
-        print(emiss_h, emiss_y / 365.25 / 24)
+        #print(emiss_h, emiss_y / 365.25 / 24)
 
         # Return emission in kg / second.
         return emiss_h / 3600
@@ -128,10 +147,18 @@ if __name__ == '__main__':
     """
     Just for testing..
     """
+    import matplotlib.pyplot as plt
+    plt.close('all')
 
     e = Corso_emissions('/home/scratch1/bart/emissions/corso')
     e.filter_emissions(4, 5, 50, 51)
 
-    for index, row in e.df_emiss.iterrows():
-        ze, pe = e.get_profile(index)
-        em = e.get_emission(index, 'co2', datetime(2022, 1, 1, 12))
+    row = e.df_emiss.iloc[4]    
+    name = row.name
+
+    #dates = pd.date_range('2020-01-01T00:00', '2021-01-01T00:00', freq='3h')
+    dates = pd.date_range('2020-01-01T00:00', '2020-03-01T00:00', freq='1h')
+    emission = e.get_emissions(name, 'co2', dates, interpolate_month=True)
+
+    plt.figure()
+    plt.plot(dates, emission)
