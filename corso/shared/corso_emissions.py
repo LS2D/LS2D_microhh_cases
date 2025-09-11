@@ -8,16 +8,18 @@ def interp_monthly_values(monthly_values, date):
     """
     Interpolate monthly values (assumed to be valid ~mid month) to requested `date`.
     """
+
+    # Approximate center day-of-year for each month
     month_centers = np.array([15, 45, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349])
 
     # Make values cyclic.
-    days = np.append(month_centers, 365)
-    values = np.append(monthly_values, monthly_values[0])
+    days = np.concatenate(([month_centers[-1] - 365], month_centers, [month_centers[0] + 365]))
+    values = np.concatenate(([monthly_values[-1]], monthly_values, [monthly_values[0]]))
 
     # Compute fractional day of year.
     day_of_year = date.timetuple().tm_yday + (date.hour / 24.0 + date.minute / 1440.0 + date.second / 86400.0)
 
-    # Return linearly interpolated value.
+    # Perform linear interpolation
     return float(np.interp(day_of_year, days, values))
 
 
@@ -51,7 +53,7 @@ class Corso_emissions:
         self.df_emiss = self.df_emiss[mask]
 
 
-    def get_emissions(self, id, specie, dates, interpolate_month=True):
+    def get_emission_tser(self, id, specie, dates, interpolate_month=True):
         """
         Wrapper for `get_emission()`, which accepts a wide range of
         date formats, lists/arrays, etc.
@@ -158,7 +160,13 @@ if __name__ == '__main__':
 
     #dates = pd.date_range('2020-01-01T00:00', '2021-01-01T00:00', freq='3h')
     dates = pd.date_range('2020-01-01T00:00', '2020-03-01T00:00', freq='1h')
-    emission = e.get_emissions(name, 'co2', dates, interpolate_month=True)
+
+    em1 = e.get_emission_tser(name, 'co2', dates, interpolate_month=True)
+    em2 = e.get_emission_tser(name, 'co2', dates, interpolate_month=False)
 
     plt.figure()
-    plt.plot(dates, emission)
+    plt.subplot(121)
+    plt.plot(dates, em1)
+
+    plt.subplot(122)
+    plt.plot(dates, em2)
