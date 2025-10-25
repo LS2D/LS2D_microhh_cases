@@ -162,6 +162,7 @@ def create_init_and_bcs_outer(era5, cams, domain, bs):
         species_cams = {}
         for specie in chemical_species:
             if specie == 'co2':
+                logger.warning('CO2 not available, setting to 420 ppm.')
                 species_cams['co2'] = np.ones_like(cams.ds_ml['no2']) * 420e-6
             elif specie not in lumping_species:
                 species_cams[specie] = cams.ds_ml[specie].values * xm_cams['air'] / xm_cams[specie]
@@ -311,7 +312,7 @@ def create_nc_input(era5_1d, era5_1d_mean, df_tuv, emissions, domain, case_name)
 
     # Photolysis rates.
     if sw_chemistry:
-        time_chem = (df_tuv.index - df_tuv.index[0]).values * 1e-9
+        time_chem = ((df_tuv.index - df_tuv.index[0]).values * 1e-9).astype('float64')
         emi_isop = np.zeros_like(time_chem)
         emi_no = np.zeros_like(time_chem)
 

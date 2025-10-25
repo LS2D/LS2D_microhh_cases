@@ -40,9 +40,9 @@ Case settings.
 float_type = np.float64       # KPP does not support float32.
 
 # Mostly for debugging:
-sw_openbc = True        # Use open or periodic boundaries.
-sw_scalars = True       # Include all scalars used by chemistry.
-sw_chemistry = False    # Use KPP chemistry (TODO).
+sw_openbc = True       # Use open or periodic boundaries.
+sw_scalars = True      # Include all scalars used by chemistry.
+sw_chemistry = False   # Use KPP chemistry (TODO).
 sw_debug = True        # Debug mini domain.
 
 
@@ -65,15 +65,15 @@ env_snellius = {
     'era5_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_era5',
     'cams_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_cams',
     'lcc_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_spatial_data/lcc/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif',
-    'microhh_path': '/home/stratum2/meteo/models/microhh',
-    'tuv_path': '/home/stratum2/meteo/models/microhhpy/external/TUV/V5.4',
-    'gpt_path': '/home/stratum2/meteo/models/coefficients_veerman',
-    'cdsapirc': '/home/stratum2/.cdsapirc',
+    'microhh_path': '/home/bstratum/meteo/models/microhh',
+    'tuv_path': '/home/bstratum/meteo/models/microhhpy/external/TUV/V5.4',
+    'gpt_path': '/gpfs/work3/0/lesmodels/team_bart/coefficients_veerman',
+    'cdsapirc': '/home/bstratum/.cdsapirc',
     'corso_path': '/gpfs/work3/0/lesmodels/team_bart/emissions/corso',
-    'work_path': '/gpfs/work2/0/nwo21036/bart/CORSO/tata_steel/'
+    'work_path': '/scratch-shared/bstratum/corso/tata_steel'
 }
 
-env = env_eddy
+env = env_snellius
 
 
 """
@@ -119,7 +119,8 @@ if sw_debug:
         lat = 22.7886,
         anchor = 'center',
         start_date = datetime(year=2021, month=2, day=23, hour=12),
-        end_date = datetime(year=2021, month=2, day=25, hour=12),
+        end_date = datetime(year=2021, month=2, day=23, hour=15),
+        #end_date = datetime(year=2021, month=2, day=25, hour=12),
         proj_str = proj_str,
         work_dir = f'{env["work_path"]}/outer'
         )
@@ -155,7 +156,7 @@ if sw_debug:
     # Vertical grid.
     vgrid = ls2d.grid.Grid_linear_stretched(kmax=96, dz0=20, alpha=0.01)
     zstart_buffer = 0.75 * vgrid.zsize
-    vgrid.plot()
+    #vgrid.plot()
 
 else:
 
@@ -266,13 +267,18 @@ cams_egg4_variables = {
         'logarithm_of_surface_pressure']
     }
 
-chemical_species = ['co', 'no', 'no2', 'hno3', 'h2o2', 'o3', 'hcho', 'ho2', 'oh', 'no3', 'n2o5', 'rooh', 'c3h6', 'ro2', 'co2']
 
-lumping_species = {
-        'c3h6': ['par', 'c2h4', 'ole', 'c5h8', 'ch3oh', 'c2h5oh', 'c3h8', 'c3h6', 'c10h16'],
-        'rooh': ['rooh', 'ch3ooh'],
-        #'ro2':  ['ch3o2', 'c2o3', 'aco2', 'ic3h7o2', 'hypropo2']}   # Last two species not available in ADS.
-        'ro2':  ['ch3o2', 'c2o3', 'aco2']}
+if sw_chemistry:
+    chemical_species = ['co', 'no', 'no2', 'hno3', 'h2o2', 'o3', 'hcho', 'ho2', 'oh', 'no3', 'n2o5', 'rooh', 'c3h6', 'ro2', 'co2']
+
+    lumping_species = {
+            'c3h6': ['par', 'c2h4', 'ole', 'c5h8', 'ch3oh', 'c2h5oh', 'c3h8', 'c3h6', 'c10h16'],
+            'rooh': ['rooh', 'ch3ooh'],
+            #'ro2':  ['ch3o2', 'c2o3', 'aco2', 'ic3h7o2', 'hypropo2']}   # Last two species not available in ADS.
+            'ro2':  ['ch3o2', 'c2o3', 'aco2']}
+else:
+    chemical_species = ['co2']
+    lumping_species = {}
 
 
 if __name__ == '__main__':
