@@ -176,8 +176,6 @@ else:
         end_date = datetime(year=2021, month=2, day=25, hour=12),
         proj_str=proj_str,
         work_dir=f'{env["work_path"]}/outer'
-        )
-
     # Cheating
     outer_dom.npx = 32
     outer_dom.npy = 48

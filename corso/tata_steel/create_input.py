@@ -500,7 +500,6 @@ def create_surface_input(era5, era5_mean, domain, env):
     soil.index_soil[:,:,:] = int(era5_mean.type_soil) - 1  # FORTRAN -> C
     soil.to_binaries(path=domain.work_dir, allow_overwrite=True)
 
-
     # Create SSTs from ERA5.
     sst_les = create_sst_from_regular_latlon(
         era5.sst[0],
@@ -509,6 +508,10 @@ def create_surface_input(era5, era5_mean, domain, env):
         domain.proj.lon,
         domain.proj.lat,
         float_type=float_type)
+
+    if np.any(np.isnan(sst_les)):
+        logger.warning('SSTs contain NaNs! Setting to 290K...')
+        sst_les[:,:] = 290.
 
     # We don't know water temperatures over land, and the extrapolated SSTs are of course not a very accurate estimation...
     # TODO: get inland water mask from Corine/LCC and let user define water/lake temperatures?
@@ -538,7 +541,7 @@ def calc_photolysis_rates(env, domain):
     return tuv_df
 
 
-def create_emissions(domain, env, sigma_x=100, sigma_y=100, no_no2_ratio=0.95):
+def create_emissions(chemical_species, domain, env, sigma_x=100, sigma_y=100, no_no2_ratio=0.95):
     """
     Get all time varying emissions from CORSO catalogue within domain.
     """
@@ -585,8 +588,17 @@ def create_emissions(domain, env, sigma_x=100, sigma_y=100, no_no2_ratio=0.95):
                     strength=strength
                 ))
 
+        # Only include species that are used.
+        species = []
+        if 'co2' in chemical_species:
+            species.append('co2')
+        if 'no' in chemical_species and 'no2' in chemical_species:
+            species.append('nox')
+        if 'co' in chemical_species:
+            species.append('co')
+
         # Get emissions as function of time for each specie.
-        for specie in ('co', 'co2', 'nox'):
+        for specie in species:
 
             strength = e.get_emission_tser(index, specie, dates)    # Units `kg/s`.
 
@@ -666,7 +678,7 @@ def main():
     save_basestate_density(bs['rho'], bs['rhoh'], f'{domain.work_dir}/rhoref_ext.0000000')
 
     # Setup emissions from corso_ps_catalogue_v2.0 and corso_ps_* time/vertical profiles.
-    emissions = create_emissions(domain, env, sigma_x=100, sigma_y=100, no_no2_ratio=0.95)
+    emissions = create_emissions(chemical_species, domain, env, sigma_x=100, sigma_y=100, no_no2_ratio=0.95)
 
     # Calculate photolysis rates for KPP
     if sw_chemistry:
