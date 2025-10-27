@@ -154,6 +154,7 @@ def create_init_and_bcs_outer(era5, cams, domain, bs):
         name_suffix='ext',
         output_dir=domain.work_dir,
         ntasks=8,
+        save_netcdf=True,
         float_type=float_type)
 
     if sw_scalars:
