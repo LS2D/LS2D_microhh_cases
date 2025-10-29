@@ -43,7 +43,7 @@ float_type = np.float64       # KPP does not support float32.
 sw_openbc = True       # Use open or periodic boundaries.
 sw_scalars = True      # Include all scalars used by chemistry.
 sw_chemistry = False   # Use KPP chemistry (TODO).
-sw_debug = True        # Debug mini domain.
+sw_debug = False       # Debug mini domain.
 
 
 """
@@ -172,14 +172,14 @@ else:
         lat=22.7886,
         anchor='center',
         start_date = datetime(year=2021, month=2, day=23, hour=12),
-        end_date = datetime(year=2021, month=2, day=25, hour=12),
+        end_date = datetime(year=2021, month=2, day=25, hour=8),
         proj_str=proj_str,
         work_dir=f'{env["work_path"]}/outer'
         )
 
     # Cheating
-    outer_dom.npx = 32
-    outer_dom.npy = 48
+    outer_dom.npx = 16
+    outer_dom.npy = 24
 
     inner_dom = Domain(
         xsize=115_200,
@@ -192,18 +192,23 @@ else:
         buffer_freq=600,
         parent=outer_dom,
         xstart_in_parent=172_800-115_200-3000,
-        ystart_in_parent=9000,
-        start_date = datetime(year=2021, month=3, day=3, hour=21),
-        end_date = datetime(year=2021, month=3, day=6, hour=0),
+        ystart_in_parent=18000,
+        start_date = datetime(year=2021, month=2, day=23, hour=21),
+        end_date = datetime(year=2021, month=2, day=25, hour=8),
         work_dir=f'{env["work_path"]}/inner'
         )
 
-    inner_dom.npx = 64
-    inner_dom.npy = 48
+    inner_dom.npx = 24
+    inner_dom.npy = 32
 
     outer_dom.child = inner_dom
 
     domains = [outer_dom, inner_dom]
+
+    # Vertical grid.
+    vgrid = ls2d.grid.Grid_linear_stretched(kmax=96, dz0=20, alpha=0.01)
+    zstart_buffer = 0.75 * vgrid.zsize
+    #vgrid.plot()
 
 
 """
