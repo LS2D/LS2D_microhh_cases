@@ -429,10 +429,10 @@ def create_ini(domain, emissions, case_name):
     ini['boundary_lateral']['sw_openbc'] = sw_openbc
 
     if parent is None:
-        ini['boundary_lateral']['sw_recycle'] = True
+        #ini['boundary_lateral']['sw_recycle'] = True
         ini['radiation']['dt_rad'] = 300
     else:
-        ini['boundary_lateral']['sw_recycle'] = False
+        #ini['boundary_lateral']['sw_recycle'] = False
         ini['radiation']['dt_rad'] = 60
 
     if child is not None:
@@ -551,7 +551,7 @@ def create_emissions(chemical_species, domain, env, sigma_x=100, sigma_y=100, no
 
     e = Corso_emissions(env['corso_path'])
 
-    margin = 0.025    # ~2.5 km
+    margin = 0.01
 
     min_lon = domain.proj.lon.min() + margin
     max_lon = domain.proj.lon.max() - margin
@@ -614,7 +614,10 @@ def create_emissions(chemical_species, domain, env, sigma_x=100, sigma_y=100, no
             else:
                 add_emission(specie, strength)
 
-    logger.info(f'Found {len(e.df_emiss)} emission(s) in domain.')
+    if len(emissions) == 0:
+        logger.critical('Found no emissions in domain!')
+
+    logger.info(f'Found {len(emissions)} emission(s) in domain.')
 
     return emissions
 

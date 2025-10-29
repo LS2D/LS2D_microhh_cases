@@ -118,9 +118,8 @@ if sw_debug:
         lon = 86.18,
         lat = 22.7886,
         anchor = 'center',
-        start_date = datetime(year=2021, month=2, day=23, hour=12),
-        end_date = datetime(year=2021, month=2, day=23, hour=15),
-        #end_date = datetime(year=2021, month=2, day=25, hour=12),
+        start_date = datetime(year=2021, month=2, day=24, hour=6),
+        end_date = datetime(year=2021, month=2, day=24, hour=7),
         proj_str = proj_str,
         work_dir = f'{env["work_path"]}/outer'
         )
@@ -141,8 +140,8 @@ if sw_debug:
         parent = outer_dom,
         xstart_in_parent = 38400-19200-2400,
         ystart_in_parent = 4800,
-        start_date = datetime(year=2021, month=2, day=23, hour=13),
-        end_date = datetime(year=2021, month=2, day=23, hour=15),
+        start_date = datetime(year=2021, month=2, day=24, hour=6),
+        end_date = datetime(year=2021, month=2, day=24, hour=7),
         work_dir = f'{env["work_path"]}/inner'
         )
 

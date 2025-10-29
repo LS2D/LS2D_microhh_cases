@@ -97,7 +97,7 @@ tau_sponge=30
 w_diff=0.003
 
 # Turbulence recycling:
-sw_recycle=None
+sw_recycle=false
 recycle_list=thl,qt,u,v,w
 tau_recycle=10
 recycle_offset=5
