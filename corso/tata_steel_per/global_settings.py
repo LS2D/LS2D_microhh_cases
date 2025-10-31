@@ -103,12 +103,12 @@ proj_str = f'+proj=lcc +lat_1={lat-1} +lat_2={lat+1} +lat_0={lat} +lon_0={lon} +
 if sw_debug:
 
     outer_dom = Domain(
-        xsize = 6_400,
-        ysize = 6_400,
-        itot = 32,
-        jtot = 32,
-        lon = 86.1996,
-        lat = 22.7886,
+        xsize = 19_200,
+        ysize = 19_200,
+        itot = 96,
+        jtot = 96,
+        lon = 86.27,
+        lat = 22.73,
         anchor = 'center',
         start_date = datetime(year=2021, month=2, day=24, hour=6),
         end_date = datetime(year=2021, month=2, day=24, hour=7),
@@ -117,8 +117,8 @@ if sw_debug:
         )
 
     # Cheating
-    outer_dom.npx = 2
-    outer_dom.npy = 4
+    outer_dom.npx = 12
+    outer_dom.npy = 16
 
     domains = [outer_dom]
 
