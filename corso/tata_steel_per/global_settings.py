@@ -39,7 +39,7 @@ Case settings.
 float_type = np.float64       # KPP does not support float32.
 
 sw_chemistry = True   # Use KPP chemistry (TODO).
-sw_debug = True       # Debug mini domain.
+sw_debug = False      # Debug mini domain.
 
 
 """
@@ -113,7 +113,7 @@ if sw_debug:
         start_date = datetime(year=2021, month=2, day=24, hour=6),
         end_date = datetime(year=2021, month=2, day=24, hour=7),
         proj_str = proj_str,
-        work_dir = env["work_path"]
+        work_dir = env['work_path']
         )
 
     # Cheating
@@ -130,55 +130,28 @@ if sw_debug:
 else:
 
     outer_dom = Domain(
-        xsize=172_800,
-        ysize=172_800,
-        itot=576,
-        jtot=576,
-        n_ghost=3,
-        n_sponge=10,
-        lbc_freq=3600,
-        buffer_freq=3600,
-        lon=86.1996,
-        lat=22.7886,
-        anchor='center',
-        start_date = datetime(year=2021, month=2, day=23, hour=12),
-        end_date = datetime(year=2021, month=2, day=25, hour=8),
-        proj_str=proj_str,
-        work_dir=f'{env["work_path"]}/outer'
-        )
-
-    # Cheating
-    outer_dom.npx = 16
-    outer_dom.npy = 24
-
-    inner_dom = Domain(
         xsize=115_200,
         ysize=115_200,
         itot=1152,
         jtot=1152,
-        n_ghost=3,
-        n_sponge=3,
-        lbc_freq=60,
-        buffer_freq=600,
-        parent=outer_dom,
-        xstart_in_parent=172_800-115_200-3000,
-        ystart_in_parent=18000,
-        start_date = datetime(year=2021, month=2, day=23, hour=21),
+        lon=86.45,
+        lat=22.55,
+        anchor='center',
+        start_date = datetime(year=2021, month=2, day=23, hour=12),
         end_date = datetime(year=2021, month=2, day=25, hour=8),
-        work_dir=f'{env["work_path"]}/inner'
+        proj_str=proj_str,
+        work_dir=env['work_path']
         )
 
-    inner_dom.npx = 24
-    inner_dom.npy = 32
+    # Cheating
+    outer_dom.npx = 24
+    outer_dom.npy = 32
 
-    outer_dom.child = inner_dom
-
-    domains = [outer_dom, inner_dom]
+    domains = [outer_dom]
 
     # Vertical grid.
-    vgrid = ls2d.grid.Grid_linear_stretched(kmax=96, dz0=20, alpha=0.01)
+    vgrid = ls2d.grid.Grid_linear_stretched(kmax=96, dz0=20, alpha=0.015)
     zstart_buffer = 0.75 * vgrid.zsize
-    #vgrid.plot()
 
 
 """
@@ -244,7 +217,9 @@ else:
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
 
+    # Plot horizontal domain with emissions.
     margin = 0.01    # ~10 km
 
     lon_min = outer_dom.proj.lon.min() + margin
@@ -257,11 +232,20 @@ if __name__ == '__main__':
     emiss.filter_emissions(lon_min, lon_max, lat_min, lat_max)
 
     # Plot domains and emissions.
-    plot_domains(
+    fig, ax = plot_domains(
         domains,
         scatter_lon=emiss.df_emiss.longitude,
         scatter_lat=emiss.df_emiss.latitude,
-        use_projection=True)
+        use_projection=True,
+        osm_background=True,
+        zoom_level=9,
+        labels=['115.2 x 115.2 km @ 100 m'])
+
+    #ax.scatter(86.1996, 22.7886, marker='x', s=100, label='Tata steel', transform=ccrs.PlateCarree())
+    #plt.legend(loc='lower right')
+
+    # Plot vertical grid.
+    vgrid.plot()
 
     # Check domain decomposition.
     for d in domains:
