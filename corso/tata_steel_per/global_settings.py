@@ -110,8 +110,8 @@ if sw_debug:
         lon = 86.27,
         lat = 22.73,
         anchor = 'center',
-        start_date = datetime(year=2021, month=2, day=24, hour=6),
-        end_date = datetime(year=2021, month=2, day=24, hour=7),
+        start_date = datetime(year=2021, month=2, day=23, hour=12),
+        end_date = datetime(year=2021, month=2, day=25, hour=12),
         proj_str = proj_str,
         work_dir = env["work_path"]
         )
