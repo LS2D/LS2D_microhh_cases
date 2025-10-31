@@ -69,7 +69,7 @@ env_snellius = {
     'work_path': '/scratch-shared/bstratum/corso/tata_steel'
 }
 
-env = env_eddy
+env = env_snellius
 
 
 """
