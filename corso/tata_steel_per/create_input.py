@@ -277,6 +277,13 @@ def create_ini(domain, era5_1d, species, emissions, case_name):
     ini['cross']['xz'] = domain.ysize/2
     ini['cross']['yz'] = domain.xsize/2
 
+    lat = 22.8167
+    lon = 86.1833
+    x, y = domain.proj.to_xy(lon, lat)
+    ini['column']['coordinates[x]'] = x
+    ini['column']['coordinates[y]'] = y
+
+
     # Check if all None values are set.
     check_ini(ini)
 

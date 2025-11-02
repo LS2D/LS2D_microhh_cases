@@ -101,6 +101,7 @@ lat = ls2d_settings['central_lat']
 proj_str = f'+proj=lcc +lat_1={lat-1} +lat_2={lat+1} +lat_0={lat} +lon_0={lon} +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs'
 
 if sw_debug:
+    print('Using debug domain...')
 
     outer_dom = Domain(
         xsize = 19_200,
@@ -128,6 +129,7 @@ if sw_debug:
     #vgrid.plot()
 
 else:
+    print('Using production domain...')
 
     outer_dom = Domain(
         xsize=115_200,
@@ -138,7 +140,7 @@ else:
         lat=22.55,
         anchor='center',
         start_date = datetime(year=2021, month=2, day=23, hour=12),
-        end_date = datetime(year=2021, month=2, day=25, hour=8),
+        end_date = datetime(year=2021, month=2, day=25, hour=12),
         proj_str=proj_str,
         work_dir=env['work_path']
         )

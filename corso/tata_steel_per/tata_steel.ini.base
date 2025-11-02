@@ -155,15 +155,15 @@ yz=None
 crosslist=thl,qt,u,v,w,thl_fluxbot,qt_fluxbot,thl_bot,ustar,p_bot,zi,z0m,z0h
 
 [dump]
-swdump=false
-dumplist=no2
+swdump=true
+dumplist=no,no2
 sampletime=900
 
 [column]
-swcolumn=false
+swcolumn=true
 sampletime=60
-coordinates[x]=1600
-coordinates[y]=1600
+coordinates[x]=None
+coordinates[y]=None
 
 [limiter]
 limitlist=None
