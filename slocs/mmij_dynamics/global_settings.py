@@ -51,10 +51,7 @@ Environment settings.
 """
 env_eddy = {
     'era5_path': '/home/scratch1/bart/LS2D_ERA5',
-    'cams_path': '/home/scratch1/bart/LS2D_CAMS',
-    'lcc_path': '/home/scratch1/bart/LCC/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif',
     'microhh_path': '/home/bart/meteo/models/microhh',
-    'tuv_path': '/home/bart/meteo/models/microhhpy/external/TUV/V5.4',
     'gpt_path': '/home/bart/meteo/models/coefficients_veerman',
     'cdsapirc': '/home/bart/.cdsapirc',
     'work_path': 'test'
@@ -62,13 +59,21 @@ env_eddy = {
 
 env_snellius = {
     'era5_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_era5',
-    'cams_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_cams',
-    'lcc_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_spatial_data/lcc/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif',
     'microhh_path': '/home/bstratum/meteo/models/microhh',
-    'tuv_path': '/home/bstratum/meteo/models/microhhpy/external/TUV/V5.4',
     'gpt_path': '/gpfs/work3/0/lesmodels/team_bart/coefficients_veerman',
     'cdsapirc': '/home/bstratum/.cdsapirc',
     'work_path': '/scratch-shared/bstratum/corso/tata_steel'
+}
+
+hpcperm = '/hpcperm/nkbs'
+scratch = '/scratch/nkbs'
+home = '/home/nkbs'
+env_ecmwf = {
+    'era5_path': f'{hpcperm}/LS2D_ERA5/',
+    'microhh_path': f'{home}/meteo/models/microhh',
+    'gpt_path': f'{home}/meteo/models/coefficients_veerman',
+    'cdsapirc': f'{home}/.cdsapirc',
+    'work_path': f'{scratch}/mmij_v1/',
 }
 
 env = env_eddy
