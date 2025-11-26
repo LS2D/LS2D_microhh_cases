@@ -35,15 +35,15 @@ from microhhpy.utils import check_domain_decomposition
 Case settings.
 """
 float_type = np.float64
-sw_debug = True               # Small debug/test domain.
+sw_debug = False               # Small debug/test domain.
 
 # Location MMIJ tower.
 lat_mmij = 52.848167
 lon_mmij = 3.435667
 
 # Depression passing over MMIJ:
-start_date = datetime(year=2012, month=9, day=24, hour=12)
-end_date   = datetime(year=2012, month=9, day=24, hour=18)
+start_date = datetime(year=2012, month=9, day=23, hour=12)
+end_date   = datetime(year=2012, month=9, day=25, hour=12)
 
 
 """
@@ -90,7 +90,6 @@ ls2d_settings = {
     'end_date'    : end_date,
     'area_size'   : 4,  # Download +/- area_size degree of ERA5/CAMS data.
     'era5_path'   : env['era5_path'],
-    'cams_path'   : env['cams_path'],
     'cdsapirc'    : env['cdsapirc'],
     'write_log'   : False,
     'data_source' : 'CDS',
@@ -101,7 +100,7 @@ ls2d_settings = {
 """
 Stretched vertical grid.
 """
-vgrid = ls2d.grid.Grid_linear_stretched(kmax=128, dz0=25, alpha=0.015)
+vgrid = ls2d.grid.Grid_linear_stretched(kmax=128, dz0=25, alpha=0.02)
 zstart_buffer = 0.75 * vgrid.zsize
 
 
@@ -123,14 +122,14 @@ if sw_debug:
     npy = 4
 
 else:
-    xsize = 115_200
-    ysize = 115_200
+    xsize = 256*400
+    ysize = 256*400
 
-    itot = 384
-    jtot = 384
+    itot = 256
+    jtot = 256
 
     npx = 16
-    npy = 24
+    npy = 32
 
 outer_dom = Domain(
     xsize = xsize,
