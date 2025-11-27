@@ -154,7 +154,7 @@ sampletime=60
 xy=10,100,1000
 xz=None
 yz=None
-crosslist=thl,qt,u,v,w,thl_fluxbot,qt_fluxbot,ustar,z0m,z0h,p_bot,zi,rr_bot
+crosslist=thl,qt,u,v,w,thl_fluxbot,qt_fluxbot,ustar,z0m,z0h,p_bot,zi,rr_bot,qt_path,qr_path,qlqi_path
 
 [dump]
 swdump=false
