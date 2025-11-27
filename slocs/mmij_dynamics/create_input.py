@@ -356,7 +356,7 @@ def create_surface_input(era5, domain, bs):
         era5.lats,
         domain.proj.lon,
         domain.proj.lat,
-        extrapolate_sea=False,
+        extrapolate_sea=True,
         float_type=settings.float_type)
 
     if np.any(np.isnan(sst_les)):

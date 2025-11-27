@@ -76,7 +76,7 @@ env_ecmwf = {
     'work_path': f'{scratch}/mmij_v1/',
 }
 
-env = env_eddy
+env = env_ecmwf
 
 
 """
@@ -129,7 +129,7 @@ else:
     jtot = 256
 
     npx = 16
-    npy = 32
+    npy = 16
 
 outer_dom = Domain(
     xsize = xsize,
