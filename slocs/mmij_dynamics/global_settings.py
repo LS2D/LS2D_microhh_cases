@@ -19,6 +19,7 @@
 #
 
 import sys
+import os
 
 from datetime import datetime
 import numpy as np
@@ -35,7 +36,8 @@ from microhhpy.utils import check_domain_decomposition
 Case settings.
 """
 float_type = np.float64
-sw_debug = False               # Small debug/test domain.
+sw_debug = False     # Small debug/test domain.
+sw_ls = "3d_geo"     # no_geo, 1d_geo, 3d_geo
 
 # Location MMIJ tower.
 lat_mmij = 52.848167
@@ -43,7 +45,8 @@ lon_mmij = 3.435667
 
 # Depression passing over MMIJ:
 start_date = datetime(year=2012, month=9, day=23, hour=12)
-end_date   = datetime(year=2012, month=9, day=25, hour=12)
+end_date   = datetime(year=2012, month=9, day=23, hour=14)
+#end_date   = datetime(year=2012, month=9, day=25, hour=12)
 
 
 """
@@ -76,7 +79,7 @@ env_ecmwf = {
     'work_path': f'{scratch}/mmij_v1/',
 }
 
-env = env_ecmwf
+env = env_eddy
 
 
 """
@@ -146,7 +149,7 @@ outer_dom = Domain(
     start_date = start_date,
     end_date = end_date,
     proj_str = proj_str,
-    work_dir = env['work_path']
+    work_dir = os.path.join(env['work_path'], sw_ls)
     )
 
 # Cheating

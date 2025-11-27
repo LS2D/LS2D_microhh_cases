@@ -33,7 +33,9 @@ import ls2d
 
 # pip install microhhpy
 from microhhpy.real import create_input_from_regular_latlon
+from microhhpy.real import create_3d_geowind_from_regular_latlon
 from microhhpy.real import create_sst_from_regular_latlon
+from microhhpy.real import create_2d_coriolis_freq
 from microhhpy.thermo import calc_moist_basestate, save_basestate_density, read_basestate_density
 from microhhpy.thermo import qsat, exner
 from microhhpy.io import read_ini, check_ini, save_ini, save_case_input
@@ -259,15 +261,22 @@ def create_nc_input(era5_1d, era5_1d_mean, domain, case_name):
         init_profiles[name] = conc
         radiation[name] = conc
 
+    # Large-scale forcings (not always used...).
+    tdep_ls = {
+        'time_ls': era5_1d.time_sec,
+        'u_geo' : era5_1d['ug'],
+        'v_geo' : era5_1d['vg']}
+
     # Save in NetCDF format.
     save_case_input(
         case_name = case_name,
         init_profiles = init_profiles,
         radiation = radiation,
+        tdep_ls = tdep_ls,
         output_dir = domain.work_dir)
 
 
-def create_ini(domain, case_name):
+def create_ini(domain, era5_1d, case_name):
     """
     Read base .ini file and fill in details.
     """
@@ -294,6 +303,25 @@ def create_ini(domain, case_name):
 
     ini['buffer']['zstart'] = 0.75 * settings.vgrid.zsize
     ini['buffer']['loadfreq'] = domain.buffer_freq
+
+    if settings.sw_ls == '1d_geo':
+        # Domain mean geostrophic wind and single Coriolis parameter.
+        ini['force']['swlspres'] = 'geo'
+        ini['force']['swtimedep_geo'] = True
+        ini['force']['swrotation_2d'] = False
+        ini['force']['fc'] = era5_1d.fc
+    elif settings.sw_ls == '3d_geo':
+        # 3D geostrophic wind, uses 2D Coriolis parameter by default.
+        ini['force']['swlspres'] = 'geo3d'
+        ini['force']['swtimedep_geo'] = True
+        ini['force']['ugeo_loadtime'] = 3600
+        ini['force']['swrotation_2d'] = False
+        ini['force']['fc'] = -1
+    elif settings.sw_ls == 'no_geo':
+        # No geostrophic wind, but still use 2D rotation.
+        ini['force']['swlspres'] = '0'
+        ini['force']['swrotation_2d'] = True
+        ini['force']['fc'] = -1
 
     ini['time']['endtime'] = (domain.end_date - domain.start_date).total_seconds()
     ini['time']['datetime_utc'] = domain.start_date.strftime('%Y-%m-%d %H:%M:%S')
@@ -370,6 +398,32 @@ def create_surface_input(era5, domain, bs):
     thl_bot.tofile(f'{domain.work_dir}/thl_bot_in.0000000')
 
 
+def create_ls_and_rotation(domain, vgrid, era5):
+    """
+    Create large-scale forcings such as geostrophic wind, 2D Coriolis frequency, ...
+    """
+    time = era5.time_sec.astype(np.int32)
+
+    # 2D Coriolis frequency.
+    fc_2d = create_2d_coriolis_freq(domain.proj.lat, settings.float_type)
+    fc_2d.tofile(f'{domain.work_dir}/fc.0000000')
+
+    if settings.sw_ls == '3d_geo':
+        # 3D Geostrophic wind. Files are written directly to `domain.work_dir`.
+        create_3d_geowind_from_regular_latlon(
+            era5.ug,
+            era5.vg,
+            era5.lons.data,
+            era5.lats.data,
+            era5.z,
+            time,
+            vgrid.z,
+            domain,
+            domain.work_dir,
+            ntasks=8,
+            float_type=settings.float_type)
+
+
 def copy_lookup_tables(env, domain):
     """
     Copy required land-surface and radiation lookup tables.
@@ -423,7 +477,7 @@ def main():
         bs = create_basestate(era5_1d_mean, settings.vgrid)
 
         # Create initial fields and lateral/top boundary conditions.
-        create_init_and_bcs_outer(era5_3d, domain, bs)
+#        create_init_and_bcs_outer(era5_3d, domain, bs)
 
     else:
         raise Exception('Not yet implemented...')
@@ -440,10 +494,13 @@ def main():
     create_nc_input(era5_1d, era5_1d_mean, domain, case_name)
 
     # Create `case.ini` from `case.ini.base`, filling in details.
-    create_ini(domain, case_name)
+    create_ini(domain, era5_1d, case_name)
 
     # Create land-surface (vegetation) and sea (SST) input.
     create_surface_input(era5_3d, domain, bs)
+
+    # Create large-scale forcings.
+    create_ls_and_rotation(domain, settings.vgrid, era5_3d)
 
     # Copy surface and radiation lookup tables.
     copy_lookup_tables(settings.env, domain)

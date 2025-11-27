@@ -132,6 +132,12 @@ beta=2.0
 buffer3d_list=u,v,w,thl,qt
 loadfreq=None
 
+[force]
+swlspres=None
+swtimedep_geo=None
+fc=None
+swrotation_2d=None
+
 [time]
 endtime=None
 dt=6.0
