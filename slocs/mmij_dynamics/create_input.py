@@ -456,8 +456,7 @@ def copy_lookup_tables(env, domain):
             shutil.copy(f[0], target)
 
 
-#def main():
-if True:
+def main():
 
     # Short-cuts
     case_name = settings.ls2d_settings['case_name']
@@ -513,5 +512,5 @@ if True:
     copy_lookup_tables(settings.env, domain)
 
 
-#if __name__ == '__main__':
-#    main()
+if __name__ == '__main__':
+    main()
