@@ -483,16 +483,12 @@ if True:
         # Create base state density.
         bs = create_basestate(era5_1d_mean, settings.vgrid)
 
-        print(bs['rho'].mean())
-
         # Create initial fields and lateral/top boundary conditions.
         create_init_and_bcs_outer(era5_3d, domain, bs)
 
     else:
         # Read base state density from parent. They *must* be identical.
         bs = read_moist_basestate(f'{domain.parent.work_dir}/thermo_basestate.0000000')
-
-        print(bs['rho'].mean())
 
         # Interpolate / link fields from parent to child domain.
         create_init_and_bcs_inner(domain, bs, settings.vgrid)
