@@ -36,8 +36,13 @@ from microhhpy.real import create_input_from_regular_latlon
 from microhhpy.real import create_3d_geowind_from_regular_latlon
 from microhhpy.real import create_sst_from_regular_latlon
 from microhhpy.real import create_2d_coriolis_freq
-from microhhpy.thermo import calc_moist_basestate, save_basestate_density, read_basestate_density
+from microhhpy.real import regrid_les
+from microhhpy.real import link_bcs_from_parent, link_buffer_from_parent
+
+from microhhpy.thermo import calc_moist_basestate, read_moist_basestate, save_moist_basestate
+from microhhpy.thermo import save_basestate_density, read_basestate_density
 from microhhpy.thermo import qsat, exner
+
 from microhhpy.io import read_ini, check_ini, save_ini, save_case_input
 from microhhpy.chem import get_rfmip_species
 from microhhpy.spatial import calc_vertical_grid_2nd
@@ -154,70 +159,70 @@ def create_init_and_bcs_outer(era5, domain, bs):
 
 
 
-#def init_and_bcs_inner(domain, bs, vgrid):
-#
-#    gd = calc_vertical_grid_2nd(vgrid.z, vgrid.zsize, float_type=float)
-#
-#    # Create and/or link initial fields and boundary conditions from parent domain.
-#    start_time = int((domain.start_date - domain.parent.start_date).total_seconds())
-#    end_time = int(start_time + (domain.end_date - domain.start_date).total_seconds())
-#    time_offset = -start_time
-#
-#    # Initial 3D fields at (optionally) delayed start time of child domain.
-#    fields = ['u', 'v', 'w', 'thl', 'qt']
-#    fields_3d = {field: start_time for field in fields}
-#
-#    # 2D pressure at top of domain.
-#    endtime = (domain.end_date - domain.start_date).total_seconds()
-#    hours = [start_time + n*3600 for n in range(int(endtime // 3600) + 1)]
-#
-#    fields_2d = {
-#            'phydro_tod': hours}
-#
-#    regrid_les(
-#            fields_3d,
-#            fields_2d,
-#            domain.parent.xsize,
-#            domain.parent.ysize,
-#            gd['z'],
-#            gd['zh'],
-#            domain.parent.itot,
-#            domain.parent.jtot,
-#            domain.xsize,
-#            domain.ysize,
-#            gd['z'],
-#            gd['zh'],
-#            domain.itot,
-#            domain.jtot,
-#            domain.xstart_in_parent,
-#            domain.ystart_in_parent,
-#            domain.parent.work_dir,
-#            domain.work_dir,
-#            time_offset,
-#            float_type=float_type,
-#            name_suffix='ext')
-#
-#    # Link boundary conditions from parent to child domain.
-#    link_wtop = True
-#
-#    link_bcs_from_parent(
-#        fields,
-#        start_time,
-#        end_time,
-#        domain.lbc_freq,
-#        link_wtop,
-#        domain.parent.work_dir,
-#        domain.work_dir,
-#        time_offset)
-#
-#    link_buffer_from_parent(
-#        ['u', 'v', 'w', 'thl', 'qt'],
-#        start_time,
-#        end_time,
-#        domain.buffer_freq,
-#        domain.parent.work_dir,
-#        domain.work_dir,
-#        time_offset)
+def create_init_and_bcs_inner(domain, bs, vgrid):
+
+    gd = calc_vertical_grid_2nd(vgrid.z, vgrid.zsize, float_type=float)
+
+    # Create and/or link initial fields and boundary conditions from parent domain.
+    start_time = int((domain.start_date - domain.parent.start_date).total_seconds())
+    end_time = int(start_time + (domain.end_date - domain.start_date).total_seconds())
+    time_offset = -start_time
+
+    # Initial 3D fields at (optionally) delayed start time of child domain.
+    fields = ['u', 'v', 'w', 'thl', 'qt']
+    fields_3d = {field: start_time for field in fields}
+
+    # 2D pressure at top of domain.
+    endtime = (domain.end_date - domain.start_date).total_seconds()
+    hours = [start_time + n*3600 for n in range(int(endtime // 3600) + 1)]
+
+    fields_2d = {
+            'phydro_tod': hours}
+
+    regrid_les(
+            fields_3d,
+            fields_2d,
+            domain.parent.xsize,
+            domain.parent.ysize,
+            gd['z'],
+            gd['zh'],
+            domain.parent.itot,
+            domain.parent.jtot,
+            domain.xsize,
+            domain.ysize,
+            gd['z'],
+            gd['zh'],
+            domain.itot,
+            domain.jtot,
+            domain.xstart_in_parent,
+            domain.ystart_in_parent,
+            domain.parent.work_dir,
+            domain.work_dir,
+            time_offset,
+            float_type=settings.float_type,
+            name_suffix='ext')
+
+    # Link boundary conditions from parent to child domain.
+    link_wtop = True
+
+    link_bcs_from_parent(
+        fields,
+        start_time,
+        end_time,
+        domain.lbc_freq,
+        link_wtop,
+        domain.parent.work_dir,
+        domain.work_dir,
+        time_offset)
+
+    link_buffer_from_parent(
+        ['u', 'v', 'w', 'thl', 'qt'],
+        start_time,
+        end_time,
+        domain.buffer_freq,
+        domain.parent.work_dir,
+        domain.work_dir,
+        time_offset)
 
 
 def create_nc_input(era5_1d, era5_1d_mean, domain, case_name):
@@ -320,6 +325,7 @@ def create_ini(domain, era5_1d, case_name):
     elif settings.sw_ls == 'no_geo':
         # No geostrophic wind, but still use 2D rotation.
         ini['force']['swlspres'] = '0'
+        ini['force']['swtimedep_geo'] = False
         ini['force']['swrotation_2d'] = True
         ini['force']['fc'] = -1
 
@@ -450,7 +456,8 @@ def copy_lookup_tables(env, domain):
             shutil.copy(f[0], target)
 
 
-def main():
+#def main():
+if True:
 
     # Short-cuts
     case_name = settings.ls2d_settings['case_name']
@@ -459,7 +466,7 @@ def main():
     args = parse_args()
 
     # Switch between domain specification.
-    domain = settings.outer_dom #if args.domain == 'outer' else settings.inner_dom
+    domain = settings.outer_dom if args.domain == 'outer' else settings.inner_dom
 
     # Create work directory.
     if not os.path.exists(domain.work_dir):
@@ -476,19 +483,23 @@ def main():
         # Create base state density.
         bs = create_basestate(era5_1d_mean, settings.vgrid)
 
+        print(bs['rho'].mean())
+
         # Create initial fields and lateral/top boundary conditions.
-#        create_init_and_bcs_outer(era5_3d, domain, bs)
+        create_init_and_bcs_outer(era5_3d, domain, bs)
 
     else:
-        raise Exception('Not yet implemented...')
-        ## Read base state density from parent. They *must* be identical.
-        #bs = read_basestate_density(f'{domain.parent.work_dir}/rhoref.0000000')
+        # Read base state density from parent. They *must* be identical.
+        bs = read_moist_basestate(f'{domain.parent.work_dir}/thermo_basestate.0000000')
 
-        ## Interpolate / link fields from parent to child domain.
-        #init_and_bcs_inner(domain, bs, settings.vgrid)
+        print(bs['rho'].mean())
 
-    # Save basestate density.
+        # Interpolate / link fields from parent to child domain.
+        create_init_and_bcs_inner(domain, bs, settings.vgrid)
+
+    # Save both basestate density and entire moist thermo basestate.
     save_basestate_density(bs['rho'], bs['rhoh'], f'{domain.work_dir}/rhoref_ext.0000000')
+    save_moist_basestate(bs, f'{domain.work_dir}/thermo_basestate_ext.0000000')
 
     # Create `case_input.nc` NetCDF file.
     create_nc_input(era5_1d, era5_1d_mean, domain, case_name)
@@ -506,5 +517,5 @@ def main():
     copy_lookup_tables(settings.env, domain)
 
 
-if __name__ == '__main__':
-    main()
+#if __name__ == '__main__':
+#    main()

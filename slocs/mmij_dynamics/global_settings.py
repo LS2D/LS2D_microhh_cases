@@ -36,8 +36,8 @@ from microhhpy.utils import check_domain_decomposition
 Case settings.
 """
 float_type = np.float64
-sw_debug = False     # Small debug/test domain.
-sw_ls = "3d_geo"     # no_geo, 1d_geo, 3d_geo
+sw_debug = True     # Small debug/test domain.
+sw_ls = "no_geo"     # no_geo, 1d_geo, 3d_geo
 
 # Location MMIJ tower.
 lat_mmij = 52.848167
@@ -45,7 +45,7 @@ lon_mmij = 3.435667
 
 # Depression passing over MMIJ:
 start_date = datetime(year=2012, month=9, day=23, hour=12)
-end_date   = datetime(year=2012, month=9, day=23, hour=14)
+end_date   = datetime(year=2012, month=9, day=23, hour=13)
 #end_date   = datetime(year=2012, month=9, day=25, hour=12)
 
 
@@ -103,7 +103,8 @@ ls2d_settings = {
 """
 Stretched vertical grid.
 """
-vgrid = ls2d.grid.Grid_linear_stretched(kmax=128, dz0=25, alpha=0.02)
+#vgrid = ls2d.grid.Grid_linear_stretched(kmax=128, dz0=25, alpha=0.02)
+vgrid = ls2d.grid.Grid_equidist(kmax=128, dz0=25)
 zstart_buffer = 0.75 * vgrid.zsize
 
 
@@ -115,14 +116,54 @@ lat = ls2d_settings['central_lat']
 proj_str = f'+proj=lcc +lat_1={lat-1} +lat_2={lat+1} +lat_0={lat} +lon_0={lon} +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs'
 
 if sw_debug:
-    xsize = 32_000
-    ysize = 32_000
-
-    itot = 64
-    jtot = 64
 
     npx = 2
     npy = 4
+
+    outer_dom = Domain(
+        xsize = 32_000,
+        ysize = 32_000,
+        itot = 64,
+        jtot = 64,
+        n_ghost = 3,
+        n_sponge = 5,
+        lbc_freq = 3600,
+        buffer_freq = 3600,
+        lat = lat_mmij,
+        lon = lon_mmij,
+        anchor = 'center',
+        start_date = start_date,
+        end_date = end_date,
+        proj_str = proj_str,
+        work_dir = os.path.join(env['work_path'], 'outer')
+        )
+
+    inner_dom = Domain(
+        xsize = 16_000,
+        ysize = 16_000,
+        itot = 32,
+        jtot = 32,
+        n_ghost = 3,
+        n_sponge = 5,
+        lbc_freq = 60,
+        buffer_freq = 600,
+        parent=outer_dom,
+        center_in_parent=True,
+        start_date = start_date,
+        end_date = end_date,
+        proj_str = proj_str,
+        work_dir = os.path.join(env['work_path'], 'inner')
+        )
+
+    outer_dom.child = inner_dom
+
+    outer_dom.npx = npx
+    outer_dom.npy = npy
+
+    inner_dom.npx = npx
+    inner_dom.npy = npy
+
+    domains = [outer_dom, inner_dom]
 
 else:
     xsize = 256*400
@@ -134,29 +175,8 @@ else:
     npx = 16
     npy = 16
 
-outer_dom = Domain(
-    xsize = xsize,
-    ysize = ysize,
-    itot = itot,
-    jtot = jtot,
-    n_ghost = 3,
-    n_sponge = 5,
-    lbc_freq = 3600,
-    buffer_freq = 3600,
-    lat = lat_mmij,
-    lon = lon_mmij,
-    anchor = 'center',
-    start_date = start_date,
-    end_date = end_date,
-    proj_str = proj_str,
-    work_dir = os.path.join(env['work_path'], sw_ls)
-    )
 
-# Cheating
-outer_dom.npx = npx
-outer_dom.npy = npy
 
-domains = [outer_dom]
 
 
 
