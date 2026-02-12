@@ -152,12 +152,12 @@ datetime_utc=None
 [stats]
 swstats=true
 swtendency=false
-sampletime=60
+sampletime=300
 
 [cross]
 swcross=true
-sampletime=60
-xy=10,100,1000
+sampletime=300
+xy=10
 xz=None
 yz=None
 crosslist=thl,qt,u,v,w,thl_fluxbot,qt_fluxbot,ustar,z0m,z0h,p_bot,zi,rr_bot,qt_path,qr_path,qlqi_path
@@ -169,7 +169,7 @@ sampletime=900
 
 [column]
 swcolumn=true
-sampletime=60
+sampletime=300
 coordinates[x]=None
 coordinates[y]=None
 

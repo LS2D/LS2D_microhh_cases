@@ -344,9 +344,9 @@ def create_ini(domain, era5_1d, case_name):
     ini['column']['coordinates[y]'] = y
 
     if parent is None:
-        ini['radiation']['dt_rad'] = 300
+        ini['radiation']['dt_rad'] = 900
     else:
-        ini['radiation']['dt_rad'] = 60
+        ini['radiation']['dt_rad'] = 300
 
     if child is not None:
         ini['subdomain']['sw_subdomain'] = True

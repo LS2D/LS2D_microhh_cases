@@ -45,8 +45,8 @@ lon_mmij = 3.435667
 
 # Depression passing over MMIJ:
 start_date = datetime(year=2012, month=9, day=23, hour=12)
-#end_date   = datetime(year=2012, month=9, day=23, hour=13)
-end_date   = datetime(year=2012, month=9, day=25, hour=12)
+end_date   = datetime(year=2012, month=9, day=23, hour=13)
+#end_date   = datetime(year=2012, month=9, day=25, hour=12)
 
 
 """
@@ -65,7 +65,7 @@ env_snellius = {
     'microhh_path': '/home/bstratum/meteo/models/microhh',
     'gpt_path': '/gpfs/work3/0/lesmodels/team_bart/coefficients_veerman',
     'cdsapirc': '/home/bstratum/.cdsapirc',
-    'work_path': '/scratch-shared/bstratum/corso/tata_steel'
+    'work_path': '/scratch-shared/bstratum/mmij_v1/'
 }
 
 hpcperm = '/hpcperm/nkbs'
@@ -79,7 +79,7 @@ env_ecmwf = {
     'work_path': f'{scratch}/mmij_v1/',
 }
 
-env = env_eddy
+env = env_snellius
 
 
 """
@@ -168,10 +168,10 @@ if sw_debug:
 else:
 
     outer_dom = Domain(
-        xsize = 512*300,
-        ysize = 512*300,
-        itot = 512,
-        jtot = 512,
+        xsize = 576*300,
+        ysize = 576*300,
+        itot = 576,
+        jtot = 576,
         n_ghost = 3,
         n_sponge = 5,
         lbc_freq = 3600,
@@ -186,10 +186,10 @@ else:
         )
 
     inner_dom = Domain(
-        xsize = 512*150,
-        ysize = 512*150,
-        itot = 512,
-        jtot = 512,
+        xsize = 576*150,
+        ysize = 576*150,
+        itot = 576,
+        jtot = 576,
         n_ghost = 3,
         n_sponge = 5,
         lbc_freq = 60,
@@ -205,10 +205,10 @@ else:
     outer_dom.child = inner_dom
 
     outer_dom.npx = 16
-    outer_dom.npy = 16
+    outer_dom.npy = 24
 
     inner_dom.npx = 16
-    inner_dom.npy = 16
+    inner_dom.npy = 24
 
     domains = [outer_dom, inner_dom]
 
