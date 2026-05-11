@@ -1,0 +1,6 @@
+matplotlib
+numpy
+numba
+xarray
+ls2d
+microhhpy
