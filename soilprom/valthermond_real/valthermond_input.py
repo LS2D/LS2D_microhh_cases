@@ -31,7 +31,7 @@ from microhhpy.spatial import Domain
 from microhhpy.chem import get_rfmip_species
 from microhhpy.io import save_case_input
 from microhhpy.io import read_ini, check_ini, save_ini
-from microhhpy.land import create_land_surface_input
+from microhhpy.land import create_land_surface_input, Land_surface_input
 
 # Import case/system settings.
 from settings import env
@@ -97,11 +97,14 @@ era = ls2d.Read_era5(l2s)
 era.calculate_forcings(n_av=0, method='2nd')
 
 # Interpolate ERA5 onto LES grid.
-les_input = era.get_les_input(vgrid.z)
+era5_les = era.get_les_input(vgrid.z)
 
 # Remove top ERA5 level, to ensure that pressure stays
 # above the minimum reference pressure in RRTMGP.
-les_input = les_input.sel(lay=slice(0,135), lev=slice(0,136))
+era5_les = era5_les.sel(lay=slice(0,135), lev=slice(0,136))
+
+# Time mean.
+era5_les_mean = era5_les.mean(dim='time')
 
 # Get background species for RRTMGP from RFMIP
 present_day = 0
@@ -127,29 +130,29 @@ w_s = -rho_p * g / (54 * nu * rho_a) * (db[1:]**2 + db[:-1]*db[1:] + db[:-1]**2)
 Create MicroHH `case_input.nc` input.
 """
 # Mean radiation profiles on LES grid:
-qt_les = les_input['qt'].mean(axis=0)
-o3_les = les_input['o3'].mean(axis=0)
+qt_les = era5_les['qt'].mean(axis=0)
+o3_les = era5_les['o3'].mean(axis=0)
 h2o_les = qt_les / (constants.ep - constants.ep * qt_les)
 
 init_profiles = {
         'z': vgrid.z,
-        'thl': les_input['thl'][0,:],
-        'qt': les_input['qt'][0,:],
-        'u': les_input['u'][0,:],
-        'v': les_input['v'][0,:],
+        'thl': era5_les['thl'][0,:],
+        'qt': era5_les['qt'][0,:],
+        'u': era5_les['u'][0,:],
+        'v': era5_les['v'][0,:],
         'nudgefac': np.ones(vgrid.kmax)/10800,
         'o3': o3_les*1e-6,
         'h2o': h2o_les}
 
 radiation  = {
-        'z_lay': les_input['z_lay'  ].mean(axis=0),
-        'z_lev': les_input['z_lev'  ].mean(axis=0),
-        'p_lay': les_input['p_lay'  ].mean(axis=0),
-        'p_lev': les_input['p_lev'  ].mean(axis=0),
-        't_lay': les_input['t_lay'  ].mean(axis=0),
-        't_lev': les_input['t_lev'  ].mean(axis=0),
-        'o3':    les_input['o3_lay' ].mean(axis=0)*1e-6,
-        'h2o':   les_input['h2o_lay'].mean(axis=0)}
+        'z_lay': era5_les['z_lay'  ].mean(axis=0),
+        'z_lev': era5_les['z_lev'  ].mean(axis=0),
+        'p_lay': era5_les['p_lay'  ].mean(axis=0),
+        'p_lev': era5_les['p_lev'  ].mean(axis=0),
+        't_lay': era5_les['t_lay'  ].mean(axis=0),
+        't_lev': era5_les['t_lev'  ].mean(axis=0),
+        'o3':    era5_les['o3_lay' ].mean(axis=0)*1e-6,
+        'h2o':   era5_les['h2o_lay'].mean(axis=0)}
 
 # Add background concentrations to init and radiation groups.
 for name, conc in rrtmgp_species.items():
@@ -157,33 +160,33 @@ for name, conc in rrtmgp_species.items():
     radiation[name] = conc
 
 timedep_surface = {
-        'time_surface': les_input['time_sec'],
-        'p_sbot': les_input['ps'],
-        'thl_sbot': les_input['wth'],
-        'qt_sbot': les_input['wq']}
+        'time_surface': era5_les['time_sec'],
+        'p_sbot': era5_les['ps'],
+        'thl_sbot': era5_les['wth'],
+        'qt_sbot': era5_les['wq']}
 
 timedep_ls = {
-        'time_ls': les_input['time_sec'],
-        'u_geo': les_input['ug'],
-        'v_geo': les_input['vg'],
-        'w_ls': les_input['wls'],
-        'thl_ls': les_input['dtthl_advec'],
-        'qt_ls': les_input['dtqt_advec'],
-        'u_ls': les_input['dtu_advec'],
-        'v_ls': les_input['dtv_advec'],
-        'thl_nudge': les_input['thl'],
-        'qt_nudge': les_input['qt'],
-        'u_nudge': les_input['u'],
-        'v_nudge': les_input['v']}
+        'time_ls': era5_les['time_sec'],
+        'u_geo': era5_les['ug'],
+        'v_geo': era5_les['vg'],
+        'w_ls': era5_les['wls'],
+        'thl_ls': era5_les['dtthl_advec'],
+        'qt_ls': era5_les['dtqt_advec'],
+        'u_ls': era5_les['dtu_advec'],
+        'v_ls': era5_les['dtv_advec'],
+        'thl_nudge': era5_les['thl'],
+        'qt_nudge': era5_les['qt'],
+        'u_nudge': era5_les['u'],
+        'v_nudge': era5_les['v']}
 
 # NOTE: these soil values are not used by MicroHH when using a realistic land-surface..
-soil_index = int(les_input.type_soil-1)  # -1 = Fortran -> C indexing
+soil_index = int(era5_les.type_soil-1)  # -1 = Fortran -> C indexing
 soil = {
-        'z': les_input.zs[::-1],
-        'theta_soil': les_input.theta_soil[0,::-1],
-        't_soil': les_input.t_soil[0,::-1],
+        'z': era5_les.zs[::-1],
+        'theta_soil': era5_les.theta_soil[0,::-1],
+        't_soil': era5_les.t_soil[0,::-1],
         'index_soil': np.ones(4) * soil_index,
-        'root_frac': les_input.root_frac_low_veg[::-1]}
+        'root_frac': era5_les.root_frac_low_veg[::-1]}
 
 save_case_input(
         case_name = 'valthermond',
@@ -214,7 +217,7 @@ ini['grid']['zsize'] = vgrid.zsize
 ini['grid']['lon'] = lon
 ini['grid']['lat'] = lat
 
-ini['force']['fc'] = les_input.fc
+ini['force']['fc'] = era5_les.fc
 
 ini['buffer']['zstart'] = 0.75 * vgrid.zsize
 
@@ -295,47 +298,20 @@ if not homogeneous_ls:
         netcdf_file='lsm_input.nc')
 
 
+    # TODO: Init soil from HiHydroSoil. For now spatially homogeneous.
+    soil = Land_surface_input(
+        hgrid.itot,
+        hgrid.jtot,
+        4,
+        exclude_veg=True,
+        debug=True,
+        float_type=float_type
+    )
 
-
-
-    ## TODO: Init soil from HiHydroSoil. For now spatially homogeneous.
-    #soil = Land_surface_input(
-    #    domain.itot,
-    #    domain.jtot,
-    #    4,
-    #    exclude_veg=True,
-    #    debug=True,
-    #    float_type=float_type
-    #)
-
-    #soil.theta_soil[:,:,:] = era5_mean.theta_soil.values[::-1, None, None]
-    #soil.t_soil[:,:,:] = era5_mean.t_soil.values[::-1, None, None]
-    #soil.index_soil[:,:,:] = int(era5_mean.type_soil) - 1  # FORTRAN -> C
-    #soil.to_binaries(path=domain.work_dir, allow_overwrite=True)
-
-    ## Create SSTs from ERA5.
-    #sst_les = create_sst_from_regular_latlon(
-    #    era5.sst[0],
-    #    era5.lons,
-    #    era5.lats,
-    #    domain.proj.lon,
-    #    domain.proj.lat,
-    #    float_type=float_type)
-
-    #if np.any(np.isnan(sst_les)):
-    #    logger.warning('SSTs contain NaNs! Setting to 290K...')
-    #    sst_les[:,:] = 290.
-
-    ## We don't know water temperatures over land, and the extrapolated SSTs are of course not a very accurate estimation...
-    ## TODO: get inland water mask from Corine/LCC and let user define water/lake temperatures?
-    #sst_les[sst_les < 280] = 280
-    #sst_les.tofile(f'{domain.work_dir}/t_bot_water.0000000')
-
-
-
-
-
-
+    soil.theta_soil[:,:,:] = era5_les_mean.theta_soil.values[::-1, None, None]
+    soil.t_soil[:,:,:] = era5_les_mean.t_soil.values[::-1, None, None]
+    soil.index_soil[:,:,:] = int(era5_les_mean.type_soil) - 1  # FORTRAN -> C
+    soil.to_binaries(path=work_dir, allow_overwrite=True)
 
 
 
