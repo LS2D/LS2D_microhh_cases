@@ -115,7 +115,7 @@ NOTE: compared to the paper, this uses a fixed atmospheric density!
 """
 rho_p = 2600   # Density particles [kg m-3]
 rho_a = 1.225  # Reference density air [kg m-3]
-nu = 1.5e-5      # Kinematic viscosity air [m2 s-1]
+nu = 1.5e-5    # Kinematic viscosity air [m2 s-1]
 g = 9.81       # Gravitational acceleration [m s-2]
 
 # New method with mean over bin range:
@@ -287,12 +287,15 @@ if not homogeneous_ls:
         hgrid.proj.lon,
         hgrid.proj.lat,
         z_soil,
-        land_use_source='lcc_100m',
+        land_use_source='corine_100m',
         land_use_tiff=env['corine_tif'],
         save_binaries=True,
         output_dir=work_dir,
         save_netcdf=True,
         netcdf_file='lsm_input.nc')
+
+
+
 
 
     ## TODO: Init soil from HiHydroSoil. For now spatially homogeneous.
