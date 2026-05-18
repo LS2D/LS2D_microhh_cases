@@ -56,8 +56,8 @@ env = env_stormy
 ls2d_settings = {
     'central_lon' : 6.932500,
     'central_lat' : 52.875833,
-    'start_date'  : datetime(year=2022, month=5, day=10, hour=12),
-    'end_date'    : datetime(year=2022, month=5, day=10, hour=13),
+    'start_date'  : datetime(year=2022, month=5, day=10, hour=8),
+    'end_date'    : datetime(year=2022, month=5, day=10, hour=14),
     'area_size'   : 1.5,
     'case_name'   : 'valthermond',
     'era5_path'   : env['era5_path'],

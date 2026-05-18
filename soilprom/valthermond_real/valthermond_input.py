@@ -73,10 +73,10 @@ lat = l2s['central_lat']
 proj_str = f'+proj=lcc +lat_1={lat-1} +lat_2={lat+1} +lat_0={lat} +lon_0={lon} +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs'
 
 hgrid = Domain(
-    xsize = 51200,
-    ysize = 51200,
-    itot = 256,
-    jtot = 256,
+    xsize = 6400,
+    ysize = 6400,
+    itot = 64,
+    jtot = 64,
     lon = l2s['central_lon'],
     lat = l2s['central_lat'],
     anchor = 'center',
@@ -240,7 +240,6 @@ ini['column']['coordinates[y]'] = list(y_column)
 # Switch between spatially homogenous or realistic land-surface:
 ini['boundary']['swconstantz0'] = homogeneous_ls
 ini['land_surface']['swhomogeneous'] = homogeneous_ls
-ini['land_surface']['swwater'] = not homogeneous_ls
 
 # Gravitational settling particles.
 ini['fields']['slist'] = particle_list
@@ -295,7 +294,8 @@ if not homogeneous_ls:
         save_binaries=True,
         output_dir=work_dir,
         save_netcdf=True,
-        netcdf_file='lsm_input.nc')
+        netcdf_file='lsm_input.nc',
+        float_type=float_type)
 
 
     # TODO: Init soil from HiHydroSoil. For now spatially homogeneous.

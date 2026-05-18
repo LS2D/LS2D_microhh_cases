@@ -77,7 +77,7 @@ w_particle=0
 swradiation=rrtmgp
 swlongwave=1
 swshortwave=1
-dt_rad=120
+dt_rad=60
 t_sfc=290
 emis_sfc=0.97
 tsi_scaling=1
@@ -90,7 +90,7 @@ swfixedsza=0
 ktot=4
 swhomogeneous=None
 swfreedrainage=1
-swwater=None
+swwater=0
 
 # Only used with homogeneous surface:
 gD=0.0
@@ -165,7 +165,7 @@ sampletime=900
 
 [column]
 swcolumn=1
-sampletime=10
+sampletime=60
 coordinates[x]=None
 coordinates[y]=None
 
