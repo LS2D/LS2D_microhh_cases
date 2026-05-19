@@ -30,7 +30,6 @@ env_snellius = {
         'era5_path': f'{project}/ls2d_era5',
         'microhh_path': None,
         'corine_tif': f'{project}/ls2d_spatial_data/corine/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif',
-        'soilgrids_nc': f'{project}/ls2d_spatial_data/soilgrids/soilgrids_nl++.nc'
         }
 
 env_eddy = {
@@ -38,7 +37,6 @@ env_eddy = {
         'era5_path': '/home/scratch1/bart/LS2D_ERA5/',
         'microhh_path': '/home/bart/meteo/models/microhh',
         'corine_tif': '/home/scratch1/bart/Corine/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif',
-        'soilgrids_nc': '/home/scratch1/bart/soilgrids/soilgrids_nl++.nc'
         }
 
 env_stormy = {
@@ -46,7 +44,6 @@ env_stormy = {
         'era5_path': '/home/scratch1/meteo_data/LS2D_ERA5/',
         'microhh_path': '/home/bart/meteo/models/microhh',
         'corine_tif': '/home/scratch1/meteo_data/Corine/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif',
-        'soilgrids_nc': '/home/scratch1/meteo_data/soilgrids/soilgrids_nl++.nc'
         }
 
 # Switch between environments.
