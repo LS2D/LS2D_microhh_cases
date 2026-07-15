@@ -18,35 +18,26 @@
 # along with LS2D.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from datetime import timedelta
-import argparse
 import shutil
-import sys
 import os
 
-import pandas as pd
 import numpy as np
 
 # pip install ls2d
 import ls2d
 
 # pip install microhhpy
-from microhhpy.real import create_input_from_regular_latlon
-from microhhpy.real import create_sst_from_regular_latlon
-from microhhpy.real import regrid_les, link_bcs_from_parent, link_buffer_from_parent
 from microhhpy.land import create_land_surface_input, Land_surface_input
-from microhhpy.thermo import calc_moist_basestate, save_basestate_density, read_basestate_density
 from microhhpy.io import read_ini, check_ini, save_ini, save_case_input
-from microhhpy.chem import get_rfmip_species, fit_gaussian_curve
-from microhhpy.spatial import calc_vertical_grid_2nd
-from microhhpy.chem import calc_tuv_photolysis
-from microhhpy.utils import get_data_file
+from microhhpy.chem import get_rfmip_species
 from microhhpy.logger import logger
 from microhhpy.constants import xm_cams
 
 # Local settings and scripts.
 from global_settings import float_type, ls2d_settings, env, outer_dom, vgrid
 from global_settings import cams_egg4_variables, chemical_species
+from global_settings import stacks
+from stack_properties import get_source
 
 
 def read_era5_cams(ls2d_settings, start_date, end_date, cams_variables, vgrid):
@@ -195,9 +186,6 @@ def create_ini(domain, era5_1d, species, emissions, case_name):
 
     ini['boundary']['scalar_outflow'] = species
 
-    ini['chemistry']['swchemistry'] = sw_chemistry
-    ini['deposition']['swdeposition'] = sw_chemistry
-
     ini['force']['fc'] = era5_1d.fc
     ini['force']['nudgelist'] = ['thl', 'qt', 'u', 'v'] + species
     ini['force']['timedeplist_nudge'] = ['thl', 'qt', 'u', 'v'] + species
@@ -213,34 +201,9 @@ def create_ini(domain, era5_1d, species, emissions, case_name):
     for e in emissions:
         e['x'], e['y'] = domain.proj.to_xy(e['lon'], e['lat'])
 
-    ini['source']['swsource'] = True
-    ini['source']['sourcelist'] = [e['specie'] for e in emissions]
-    ini['source']['source_x0'] = [e['x'] for e in emissions]
-    ini['source']['source_y0'] = [e['y'] for e in emissions]
-    ini['source']['source_z0'] = [e['z'] for e in emissions]
-    ini['source']['sigma_x'] = [e['sigma_x'] for e in emissions]
-    ini['source']['sigma_y'] = [e['sigma_y'] for e in emissions]
-    ini['source']['sigma_z'] = [e['sigma_z'] for e in emissions]
-    ini['source']['strength'] = len(emissions)*[-1]
-    #ini['source']['strength'] = [e['strength'] for e in emissions]
-    ini['source']['swvmr'] = [True for e in emissions]
-    ini['source']['line_x'] = [0 for e in emissions]
-    ini['source']['line_y'] = [0 for e in emissions]
-    ini['source']['line_z'] = [0 for e in emissions]
-
-    chem_vars = ['no', 'no2', 'o3', 'co', 'oh', 'co2']
-    path_vars = ['no_path', 'no2_path', 'o3_path', 'co_path', 'oh_path', 'co2_path']
-    ini['cross']['crosslist'] += chem_vars + path_vars
-
+    ini['cross']['crosslist'] += ['co2', 'co2_path']
     ini['cross']['xz'] = domain.ysize/2
     ini['cross']['yz'] = domain.xsize/2
-
-    lat = 22.8167
-    lon = 86.1833
-    x, y = domain.proj.to_xy(lon, lat)
-    ini['column']['coordinates[x]'] = x
-    ini['column']['coordinates[y]'] = y
-
 
     # Check if all None values are set.
     check_ini(ini)
@@ -287,6 +250,13 @@ def create_surface_input(era5, era5_mean, domain, env):
     soil.to_binaries(path=domain.work_dir, allow_overwrite=True)
 
 
+def create_emissions(stacks, domain):
+    """
+    Create 3D emission input.
+    """
+    pass
+
+
 def copy_lookup_tables(env, domain):
     """
     Copy required land-surface and radiation lookup tables.
@@ -327,8 +297,8 @@ if True:
     # Create `case_input.nc` NetCDF file.
     create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, outer_dom, ls2d_settings['case_name'])
 
-    ## Create `case.ini` from `case.ini.base`, filling in details.
-    #create_ini(outer_dom, era5_1d, chemical_species, emissions, ls2d_settings['case_name'])
+    # Create `case.ini` from `case.ini.base`, filling in details.
+    create_ini(outer_dom, era5_1d, chemical_species, ls2d_settings['case_name'])
 
     ## Create land-surface (vegetation) and sea (SST) input.
     #create_surface_input(era5_3d, era5_1d_mean, outer_dom, env)

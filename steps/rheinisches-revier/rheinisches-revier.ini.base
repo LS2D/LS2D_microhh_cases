@@ -94,10 +94,10 @@ swclearskystats=true
 swfixedsza=false
 
 [chemistry]
-swchemistry=None
+swchemistry=false
 
 [deposition]
-swdeposition=None
+swdeposition=false
 
 [fields]
 visc=0
@@ -169,18 +169,4 @@ coordinates[y]=None
 limitlist=None
 
 [source]
-swsource=None
-swtimedep_strength=true
-
-#sourcelist=None
-#source_x0=None
-#source_y0=None
-#source_z0=None
-#sigma_x=None
-#sigma_y=None
-#sigma_z=None
-#strength=None
-#swvmr=None
-#line_x=None
-#line_y=None
-#line_z=None
+swsource=0
