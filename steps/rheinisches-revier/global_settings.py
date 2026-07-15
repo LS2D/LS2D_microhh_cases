@@ -46,10 +46,8 @@ env_eddy = {
     'cams_path': '/home/scratch1/bart/LS2D_CAMS',
     'lcc_path': '/home/scratch1/bart/LCC/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif',
     'microhh_path': '/home/bart/meteo/models/microhh',
-    'tuv_path': '/home/bart/meteo/models/microhhpy/external/TUV/V5.4',
     'gpt_path': '/home/bart/meteo/models/coefficients_veerman',
     'cdsapirc': '/home/bart/.cdsapirc',
-    'corso_path': '/home/scratch1/bart/emissions/corso',
     'work_path': 'test'
 }
 
@@ -58,10 +56,8 @@ env_snellius = {
     'cams_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_cams',
     'lcc_path': '/gpfs/work3/0/lesmodels/team_bart/ls2d_spatial_data/lcc/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif',
     'microhh_path': '/home/bstratum/meteo/models/microhh',
-    'tuv_path': '/home/bstratum/meteo/models/microhhpy/external/TUV/V5.4',
     'gpt_path': '/gpfs/work3/0/lesmodels/team_bart/coefficients_veerman',
     'cdsapirc': '/home/bstratum/.cdsapirc',
-    'corso_path': '/gpfs/work3/0/lesmodels/team_bart/emissions/corso',
     'work_path': '/scratch-shared/bstratum/corso/tata_steel'
 }
 
@@ -166,8 +162,23 @@ cams_egg4_variables = {
         'logarithm_of_surface_pressure']
     }
 
+
 chemical_species = ['co2']
-lumping_species = {}
+
+
+"""
+Emission settings.
+NA = Niederaussem
+...
+"""
+stacks = {
+    'na_D;': (300, 50.99451, 6.66645),      # ??
+    'na_E;': (300, 50.99451, 6.66645),
+    'na_F;': (300, 50.99400, 6.66878),
+    'na_G;': (600, 50.99514, 6.66810),
+    'na_H;': (600, 50.99465, 6.67041),
+    'na_K;': (950, 50.99611, 6.67137),
+    }
 
 
 if __name__ == '__main__':
@@ -197,8 +208,6 @@ if __name__ == '__main__':
     # Plot domains and emissions.
     fig, ax = plot_domains(
         domains,
-        scatter_lon=lon,
-        scatter_lat=lat,
         use_projection=True,
         osm_background=True,
         zoom_level=9,

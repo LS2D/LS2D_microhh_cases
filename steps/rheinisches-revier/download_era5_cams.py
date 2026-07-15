@@ -22,13 +22,10 @@
 from datetime import datetime
 import ls2d
 
-from global_settings import ls2d_settings, cams_eac4_variables, cams_egg4_variables
+from global_settings import ls2d_settings, cams_egg4_variables
 
 # Download ERA5 meteorology.
 ls2d.download_era5(ls2d_settings, exit_when_waiting=False)
 
-# Download CAMS chemical species.
-ls2d.download_cams(ls2d_settings, variables=cams_eac4_variables, grid=0.25)
-
 # CAMS-EGG only available < 2021..
-#ls2d.download_cams(ls2d_settings, variables=cams_egg4_variables, grid=0.25)
+ls2d.download_cams(ls2d_settings, variables=cams_egg4_variables, grid=0.25)
