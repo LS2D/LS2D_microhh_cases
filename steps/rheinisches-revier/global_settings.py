@@ -96,12 +96,14 @@ if sw_debug:
     print('Using debug domain...')
 
     outer_dom = Domain(
-        xsize = 1*19_200,
-        ysize = 1*19_200,
-        itot = 96,
-        jtot = 96,
-        lon = 6.62,
-        lat = 51.02,
+        xsize = 3_200,
+        ysize = 3_200,
+        itot = 64,
+        jtot = 64,
+        #lon = 6.62,
+        #lat = 51.02,
+        lon = 6.6685,   # Niederaussem only
+        lat = 50.9946,
         anchor = 'center',
         start_date = datetime(year=2007, month=8, day=4, hour=8),
         end_date = datetime(year=2007, month=8, day=4, hour=15),
@@ -172,12 +174,12 @@ NA = Niederaussem
 ...
 """
 stacks = {
-    'na_D;': (300, 50.99451, 6.66645),      # ??
-    'na_E;': (300, 50.99451, 6.66645),
-    'na_F;': (300, 50.99400, 6.66878),
-    'na_G;': (600, 50.99514, 6.66810),
-    'na_H;': (600, 50.99465, 6.67041),
-    'na_K;': (950, 50.99611, 6.67137),
+    'NA_D': {'fuel': 'lignite_cooling_tower', 'p':  300, 'eta': 0.31, 'rh': 0.95, 'h': 106, 'lat': 50.99353, 'lon': 6.66737},
+    'NA_E': {'fuel': 'lignite_cooling_tower', 'p':  300, 'eta': 0.31, 'rh': 0.95, 'h': 106, 'lat': 50.99451, 'lon': 6.66645},
+    'NA_F': {'fuel': 'lignite_cooling_tower', 'p':  300, 'eta': 0.31, 'rh': 0.95, 'h': 106, 'lat': 50.99400, 'lon': 6.66878},
+    'NA_G': {'fuel': 'lignite_cooling_tower', 'p':  600, 'eta': 0.31, 'rh': 0.95, 'h': 128, 'lat': 50.99514, 'lon': 6.66810},
+    'NA_H': {'fuel': 'lignite_cooling_tower', 'p':  600, 'eta': 0.31, 'rh': 0.95, 'h': 128, 'lat': 50.99465, 'lon': 6.67041},
+    'NA_K': {'fuel': 'lignite_cooling_tower', 'p': 1027, 'eta': 0.43, 'rh': 0.95, 'h': 200, 'lat': 50.99611, 'lon': 6.67137},
     }
 
 
@@ -209,9 +211,14 @@ if __name__ == '__main__':
     fig, ax = plot_domains(
         domains,
         use_projection=True,
-        osm_background=True,
-        zoom_level=9,
+        background='osm',
+        zoom_level=16,
         labels=['Outer domain'])
+
+    for name, p in stacks.items():
+        ax.scatter(p['lon'], p['lat'], label=f'{name}: P={p["p"]} MW, z={p["h"]} m', transform=ccrs.PlateCarree())
+
+    plt.legend(loc='upper left')
 
     # Plot vertical grid.
     #vgrid.plot()
