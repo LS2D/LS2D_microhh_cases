@@ -34,7 +34,7 @@ from microhhpy.logger import logger
 from microhhpy.constants import xm_cams
 
 # Local settings and scripts.
-from global_settings import float_type, ls2d_settings, env, outer_dom, vgrid
+from global_settings import float_type, ls2d_settings, env, domain, vgrid
 from global_settings import cams_egg4_variables, chemical_species
 from global_settings import stacks
 from stack_properties import get_source
@@ -157,7 +157,7 @@ def create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, ca
         output_dir = domain.work_dir)
 
 
-def create_ini(domain, era5_1d, species, emissions, case_name):
+def create_ini(domain, era5_1d, species, case_name):
     """
     Read base .ini file and fill in details.
     """
@@ -197,10 +197,6 @@ def create_ini(domain, era5_1d, species, emissions, case_name):
     ini['time']['endtime'] = (domain.end_date - domain.start_date).total_seconds()
     ini['time']['datetime_utc'] = domain.start_date.strftime('%Y-%m-%d %H:%M:%S')
 
-    # Emissions from lat/lon to x/y.
-    for e in emissions:
-        e['x'], e['y'] = domain.proj.to_xy(e['lon'], e['lat'])
-
     ini['cross']['crosslist'] += ['co2', 'co2_path']
     ini['cross']['xz'] = domain.ysize/2
     ini['cross']['yz'] = domain.xsize/2
@@ -212,7 +208,7 @@ def create_ini(domain, era5_1d, species, emissions, case_name):
     save_ini(ini, f'{domain.work_dir}/{case_name}.ini')
 
 
-def create_surface_input(era5, era5_mean, domain, env):
+def create_surface_input(era5_mean, domain, env):
     """
     Create land-surface (vegetation) and sea (SST) input.
     """
@@ -226,13 +222,14 @@ def create_surface_input(era5, era5_mean, domain, env):
         domain.proj.lon,
         domain.proj.lat,
         z_soil,
-        land_use_source='lcc_100m',
-        land_use_tiff=env['lcc_path'],
+        land_use_source='corine_100m',
+        land_use_tiff=env['corine_path'],
         save_binaries=True,
         output_dir=domain.work_dir,
         save_netcdf=True,
-        netcdf_file='lsm_input.nc')
-
+        netcdf_file='lsm_input.nc',
+        float_type=float_type
+    )
 
     # TODO: Init soil from HiHydroSoil. For now spatially homogeneous.
     soil = Land_surface_input(
@@ -287,24 +284,24 @@ def copy_lookup_tables(env, domain):
 if True:
 
     # Create work directory.
-    if not os.path.exists(outer_dom.work_dir):
-        os.makedirs(outer_dom.work_dir)
+    if not os.path.exists(domain.work_dir):
+        os.makedirs(domain.work_dir)
 
     # Initial / boundary conditions from ERA5 / CAMS using (LS)2D.
     _, era5_1d, era5_1d_mean, _, cams_1d = read_era5_cams(
-        ls2d_settings, outer_dom.start_date, outer_dom.end_date, cams_egg4_variables, vgrid)
+        ls2d_settings, domain.start_date, domain.end_date, cams_egg4_variables, vgrid)
 
     # Create `case_input.nc` NetCDF file.
-    create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, outer_dom, ls2d_settings['case_name'])
+    create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, ls2d_settings['case_name'])
 
     # Create `case.ini` from `case.ini.base`, filling in details.
-    create_ini(outer_dom, era5_1d, chemical_species, ls2d_settings['case_name'])
+    create_ini(domain, era5_1d, chemical_species, ls2d_settings['case_name'])
 
-    ## Create land-surface (vegetation) and sea (SST) input.
-    #create_surface_input(era5_3d, era5_1d_mean, outer_dom, env)
+    # Create land-surface (vegetation) and sea (SST) input.
+    create_surface_input(era5_1d_mean, domain, env)
 
-    ## Copy surface and radiation lookup tables.
-    #copy_lookup_tables(env, outer_dom)
+    # Copy surface and radiation lookup tables.
+    copy_lookup_tables(env, domain)
 
 
 #if __name__ == '__main__':

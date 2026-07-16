@@ -45,6 +45,18 @@ env_eddy = {
     'era5_path': '/home/scratch1/bart/LS2D_ERA5',
     'cams_path': '/home/scratch1/bart/LS2D_CAMS',
     'lcc_path': '/home/scratch1/bart/LCC/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif',
+    'corine_path': '/home/scratch1/bart/Corine/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif',
+    'microhh_path': '/home/bart/meteo/models/microhh',
+    'gpt_path': '/home/bart/meteo/models/coefficients_veerman',
+    'cdsapirc': '/home/bart/.cdsapirc',
+    'work_path': 'test'
+}
+
+env_stormy = {
+    'era5_path': '/home/scratch1/meteo_data/LS2D_ERA5',
+    'cams_path': '/home/scratch1/meteo_data/LS2D_CAMS',
+    'lcc_path': '/home/scratch1/meteo_data/LCC/PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif',
+    'corine_path': '/home/scratch1/meteo_data/Corine/u2018_clc2018_v2020_20u1_raster100m/DATA/U2018_CLC2018_V2020_20u1.tif',
     'microhh_path': '/home/bart/meteo/models/microhh',
     'gpt_path': '/home/bart/meteo/models/coefficients_veerman',
     'cdsapirc': '/home/bart/.cdsapirc',
@@ -61,7 +73,7 @@ env_snellius = {
     'work_path': '/scratch-shared/bstratum/corso/tata_steel'
 }
 
-env = env_eddy
+env = env_stormy
 
 
 """
@@ -95,11 +107,11 @@ proj_str = f'+proj=lcc +lat_1={lat-1} +lat_2={lat+1} +lat_0={lat} +lon_0={lon} +
 if sw_debug:
     print('Using debug domain...')
 
-    outer_dom = Domain(
+    domain = Domain(
         xsize = 3_200,
         ysize = 3_200,
-        itot = 64,
-        jtot = 64,
+        itot = 32,
+        jtot = 32,
         #lon = 6.62,
         #lat = 51.02,
         lon = 6.6685,   # Niederaussem only
@@ -112,10 +124,8 @@ if sw_debug:
         )
 
     # Cheating
-    outer_dom.npx = 2
-    outer_dom.npy = 2
-
-    domains = [outer_dom]
+    domain.npx = 1
+    domain.npy = 1
 
     # Vertical grid.
     vgrid = ls2d.grid.Grid_linear_stretched(kmax=96, dz0=20, alpha=0.01)
@@ -125,7 +135,7 @@ if sw_debug:
 #else:
 #    print('Using production domain...')
 #
-#    outer_dom = Domain(
+#    domain = Domain(
 #        xsize=115_200,
 #        ysize=115_200,
 #        itot=1152,
@@ -140,10 +150,10 @@ if sw_debug:
 #        )
 #
 #    # Cheating
-#    outer_dom.npx = 24
-#    outer_dom.npy = 32
+#    domain.npx = 24
+#    domain.npy = 32
 #
-#    domains = [outer_dom]
+#    domains = [domain]
 #
 #    # Vertical grid.
 #    vgrid = ls2d.grid.Grid_linear_stretched(kmax=96, dz0=20, alpha=0.015)
@@ -201,11 +211,11 @@ if __name__ == '__main__':
     # Plot horizontal domain with emissions.
     margin = 0.01    # ~10 km
 
-    lon_min = outer_dom.proj.lon.min() + margin
-    lon_max = outer_dom.proj.lon.max() - margin
+    lon_min = domain.proj.lon.min() + margin
+    lon_max = domain.proj.lon.max() - margin
 
-    lat_min = outer_dom.proj.lat.min() + margin
-    lat_max = outer_dom.proj.lat.max() - margin
+    lat_min = domain.proj.lat.min() + margin
+    lat_max = domain.proj.lat.max() - margin
 
     # Plot domains and emissions.
     fig, ax = plot_domains(

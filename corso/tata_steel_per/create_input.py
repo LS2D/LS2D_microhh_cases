@@ -310,7 +310,8 @@ def create_surface_input(era5, era5_mean, domain, env):
         save_binaries=True,
         output_dir=domain.work_dir,
         save_netcdf=True,
-        netcdf_file='lsm_input.nc')
+        netcdf_file='lsm_input.nc',
+        float_type=float_type)
 
 
     # TODO: Init soil from HiHydroSoil. For now spatially homogeneous.

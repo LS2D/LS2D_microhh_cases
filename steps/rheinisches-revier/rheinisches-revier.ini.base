@@ -43,7 +43,7 @@ Ni0=10e5
 
 [boundary]
 swboundary=surface_lsm
-swconstantz0=false
+swconstantz0=true
 mbcbot=noslip
 mbctop=freeslip
 sbcbot=flux
@@ -52,9 +52,7 @@ sbcbot[thl]=dirichlet
 sbcbot[qt]=dirichlet
 sbot=0
 stop=0
-#sbot[thl]=0.1
 stop[thl]=0
-#sbot[qt]=0.1e-3
 stop[qt]=0
 z0m=0.1
 z0h=0.01
@@ -69,16 +67,8 @@ flow_direction[west]=inflow
 [land_surface]
 swhomogeneous=false
 swfreedrainage=true
-swwater=true
+swwater=false
 ktot=4
-
-# Charnock constants are from IFS.
-swcharnock=true
-alpha_m=0.11
-alpha_ch=0.018
-# NOTE: we have a single `z0h` and not `z0h` and `z0q` at the moment.
-#       from IFS: alpha_h=0.4, alpha_q=0.62.
-alpha_h=0.50
 
 [radiation]
 swradiation=rrtmgp
@@ -149,21 +139,21 @@ sampletime=60
 [cross]
 swcross=true
 sampletime=60
-xy=10,100,1000
+xy=10,100,200,1000
 xz=None
 yz=None
-crosslist=thl,qt,u,v,w,thl_fluxbot,qt_fluxbot,thl_bot,ustar,p_bot,zi,z0m,z0h
+crosslist=thl,qt,u,v,w,thl_fluxbot,qt_fluxbot,ql_path,qt_path
 
 [dump]
-swdump=true
+swdump=false
 dumplist=no,no2
 sampletime=900
 
-[column]
-swcolumn=true
-sampletime=60
-coordinates[x]=None
-coordinates[y]=None
+#[column]
+#swcolumn=true
+#sampletime=60
+#coordinates[x]=None
+#coordinates[y]=None
 
 [limiter]
 limitlist=None
