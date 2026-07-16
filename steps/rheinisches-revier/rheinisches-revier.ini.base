@@ -34,6 +34,7 @@ swthermo=moist
 swbasestate=anelastic
 swupdatebasestate=true
 pbot=1e5
+swtimedep_pbot=true
 
 [micro]
 swmicro=0

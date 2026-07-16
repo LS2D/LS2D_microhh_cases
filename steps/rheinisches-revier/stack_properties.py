@@ -113,6 +113,8 @@ def get_source(site, p_env):
         qe       : emission specific humidity [kg kg-1]
         Me       : emission mass flux (kg s-1)
     """
+    # site['p'] is electrical output; the Pregger bins are keyed on thermal
+    # capacity, so convert using the plant efficiency before the lookup.
     q_th = site['p'] / site['eta']
     lut  = lookup_stacks(site['fuel'], q_th)
 
@@ -120,18 +122,27 @@ def get_source(site, p_env):
 
     T, w, V_std = lut['T'], lut['w'], lut['V_std']
 
-    # Outlet geometry needs the volume flux at emission conditions.
+    # V_std (Pregger LUT) is flue gas volume flow at standard state (273.15 K).
+    # The exit velocity w is defined at actual stack conditions (T), so convert
+    # V_std to the stack-condition volume flux before deriving the outlet area.
     V_stack = V_std * T / cst.T0
     A = V_stack / w
+    d = np.sqrt(4.0 * A / np.pi)
+
+    # Mass flux instead uses V_std directly with rho_std (mass is conserved
+    # between standard and stack conditions, so no T-conversion needed here).
     Me = rho_std * V_std
+
+    # Emission specific humidity: RH at flue gas temperature T, ambient pressure p_env.
+    qe = site['rh'] * qsat(p_env, T)
 
     src = {
         'lat': site['lat'],
         'lon': site['lon'],
         'h': h,
-        'd': np.sqrt(4.0 * A / np.pi),
+        'd': d,
         'Te': T,
-        'qe': site['rh'] * qsat(p_env, T),
+        'qe': qe,
         'Me': Me,
         }
 

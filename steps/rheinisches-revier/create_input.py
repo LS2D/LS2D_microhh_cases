@@ -28,6 +28,7 @@ import ls2d
 
 # pip install microhhpy
 from microhhpy.land import create_land_surface_input, Land_surface_input
+from microhhpy.thermo import calc_moist_basestate
 from microhhpy.io import read_ini, check_ini, save_ini, save_case_input
 from microhhpy.chem import get_rfmip_species
 from microhhpy.logger import logger
@@ -70,7 +71,7 @@ def read_era5_cams(ls2d_settings, start_date, end_date, cams_variables, vgrid):
     return era5, era5_les, era5_mean, cams, cams_les
 
 
-def create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, case_name):
+def create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, vgrid, case_name):
     """
     Create `case_input.nc` file.
     """
@@ -128,6 +129,12 @@ def create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, ca
             init_profiles[name] = conc
         radiation[name] = conc
 
+    # Time dependent surface conditions.
+    tdep_sfc = {
+        'time_surface': era5_1d.time_sec,
+        'p_sbot': era5_1d.ps,
+        }
+
     # Large-scale forcings and inflow.
     tdep_ls = {
         'time_ls': era5_1d.time_sec,
@@ -141,7 +148,8 @@ def create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, ca
         'qt_ls' : era5_1d.dtqt_advec,
         'u_ls' : era5_1d.dtu_advec,
         'v_ls' : era5_1d.dtv_advec,
-        'w_ls' : era5_1d.wls}
+        'w_ls' : era5_1d.wls,
+        }
 
     for name, conc in species_cams.items():
         tdep_ls[f'{name}_nudge'] = conc
@@ -154,10 +162,11 @@ def create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, ca
         radiation = radiation,
         soil = soil,
         tdep_ls = tdep_ls,
+        tdep_surface = tdep_sfc,
         output_dir = domain.work_dir)
 
 
-def create_ini(domain, era5_1d, species, case_name):
+def create_ini(era5_1d, domain, vgrid, species, case_name):
     """
     Read base .ini file and fill in details.
     """
@@ -247,7 +256,22 @@ def create_surface_input(era5_mean, domain, env):
     soil.to_binaries(path=domain.work_dir, allow_overwrite=True)
 
 
-def create_emissions(stacks, domain):
+def create_basestate(era5_1d, vgrid):
+    """
+    Create thermodynamic basestate, needed for emission input.
+    """
+
+    bs = calc_moist_basestate(
+        era5_1d['thl'][0,:].values,
+        era5_1d['qt'][0,:].values,
+        float(era5_1d.ps[0]),
+        vgrid.z,
+        vgrid.zsize)
+
+    return bs
+
+
+def create_emissions(stacks, domain, vgrid, bs):
     """
     Create 3D emission input.
     """
@@ -292,13 +316,16 @@ if True:
         ls2d_settings, domain.start_date, domain.end_date, cams_egg4_variables, vgrid)
 
     # Create `case_input.nc` NetCDF file.
-    create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, ls2d_settings['case_name'])
+    create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, vgrid, ls2d_settings['case_name'])
 
     # Create `case.ini` from `case.ini.base`, filling in details.
-    create_ini(domain, era5_1d, chemical_species, ls2d_settings['case_name'])
+    create_ini(era5_1d, domain, vgrid, chemical_species, ls2d_settings['case_name'])
 
     # Create land-surface (vegetation) and sea (SST) input.
-    create_surface_input(era5_1d_mean, domain, env)
+    #create_surface_input(era5_1d_mean, domain, env)
+
+    # Create thermo basestate.
+    bs = create_basestate(era5_1d, vgrid)
 
     # Copy surface and radiation lookup tables.
     copy_lookup_tables(env, domain)
