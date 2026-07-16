@@ -160,4 +160,9 @@ sampletime=900
 limitlist=None
 
 [source]
-swsource=0
+swsource=3d
+swheat=true
+swmoisture=true
+sourcelist=co2
+ktot=None
+

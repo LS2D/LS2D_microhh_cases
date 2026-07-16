@@ -29,6 +29,8 @@ import ls2d
 # pip install microhhpy
 from microhhpy.land import create_land_surface_input, Land_surface_input
 from microhhpy.thermo import calc_moist_basestate
+from microhhpy.spatial import calc_vertical_grid_2nd
+from microhhpy.chem import Emission_input
 from microhhpy.io import read_ini, check_ini, save_ini, save_case_input
 from microhhpy.chem import get_rfmip_species
 from microhhpy.logger import logger
@@ -166,7 +168,7 @@ def create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, vg
         output_dir = domain.work_dir)
 
 
-def create_ini(era5_1d, domain, vgrid, species, case_name):
+def create_ini(era5_1d, emiss, domain, vgrid, species, case_name):
     """
     Read base .ini file and fill in details.
     """
@@ -194,6 +196,8 @@ def create_ini(era5_1d, domain, vgrid, species, case_name):
     ini['buffer']['zstart'] = 0.75 * vgrid.zsize
 
     ini['boundary']['scalar_outflow'] = species
+
+    ini['source']['ktot'] = emiss.kmax
 
     ini['force']['fc'] = era5_1d.fc
     ini['force']['nudgelist'] = ['thl', 'qt', 'u', 'v'] + species
@@ -274,8 +278,58 @@ def create_basestate(era5_1d, vgrid):
 def create_emissions(stacks, domain, vgrid, bs):
     """
     Create 3D emission input.
+    This is a combination of the stack info in `global_settings`,
+    combined with the emission properties from:
+    Pregger & Friedrich (2009), Env. Pollution 157, 552-560, Fig. 1.
     """
-    pass
+
+    # Create exact vertical grid definition MicroHH.
+    gd = calc_vertical_grid_2nd(vgrid.z, vgrid.zsize)
+
+    # The emission of heat/moisture requires specifying the:
+    # 1. te = Absolute emission temperature (K),
+    # 2. qe = Emission specific humidity (kg kg-1),
+    # 3. me = Emission mass flux (kg s-1)
+    fields = ['co2', 'te', 'qe', 'me']
+    times = [0]
+
+    emiss = Emission_input(
+            fields,
+            times,
+            domain.x,
+            domain.y,
+            gd['z'],
+            gd['dz'],
+            bs['rho'],
+            float_type=float_type)
+
+    for name, stack in stacks.items():
+
+        # Obtain pressure at stack height.
+        k = np.abs(vgrid.z - stack['h']).argmin()
+        p_env = bs['p'][k]
+
+        # Get source information. 
+        src = get_source(stack, p_env)
+
+        # Convert lat/lon to x/y.
+        x,y = domain.proj.to_xy(src['lon'], src['lat'])
+
+        # Add to 3D field.
+        emiss.add_point(field='co2', strength=1, time=0, x0=x, y0=y, z0=src['h'], sw_vmr=False)
+
+        # Add heat/moisture/mass manually, which skips the volume normalisation.
+        emiss.add_manual(field='te', value=src['Te'], time=0, x0=x, y0=y, z0=src['h'])
+        emiss.add_manual(field='qe', value=src['qe'], time=0, x0=x, y0=y, z0=src['h'])
+        emiss.add_manual(field='me', value=src['Me'], time=0, x0=x, y0=y, z0=src['h'])
+
+    # Clip 3D fields to required vertical size.
+    emiss.clip()
+
+    # Save 3D binaries.
+    emiss.to_binary(path=domain.work_dir)
+
+    return emiss
 
 
 def copy_lookup_tables(env, domain):
@@ -318,14 +372,17 @@ if True:
     # Create `case_input.nc` NetCDF file.
     create_nc_input(era5_1d, era5_1d_mean, cams_1d, chemical_species, domain, vgrid, ls2d_settings['case_name'])
 
-    # Create `case.ini` from `case.ini.base`, filling in details.
-    create_ini(era5_1d, domain, vgrid, chemical_species, ls2d_settings['case_name'])
-
-    # Create land-surface (vegetation) and sea (SST) input.
-    #create_surface_input(era5_1d_mean, domain, env)
-
     # Create thermo basestate.
     bs = create_basestate(era5_1d, vgrid)
+
+    # Create 3D emission input including heat/moisture.
+    emiss = create_emissions(stacks, domain, vgrid, bs)
+
+    # Create `case.ini` from `case.ini.base`, filling in details.
+    create_ini(era5_1d, emiss, domain, vgrid, chemical_species, ls2d_settings['case_name'])
+
+    # Create land-surface (vegetation) and sea (SST) input.
+    create_surface_input(era5_1d_mean, domain, env)
 
     # Copy surface and radiation lookup tables.
     copy_lookup_tables(env, domain)
