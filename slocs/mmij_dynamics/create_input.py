@@ -397,8 +397,8 @@ def create_surface_input(era5, domain, bs):
         logger.critical('SSTs contain NaNs!')
 
     p_bot = bs['ph'][0]
-    qsat_bot = qsat(p_bot, sst_les)
-    thl_bot = sst_les / exner(p_bot)
+    qsat_bot = qsat(p_bot, sst_les).astype(settings.float_type)
+    thl_bot = (sst_les / exner(p_bot)).astype(settings.float_type)
 
     qsat_bot.tofile(f'{domain.work_dir}/qt_bot_in.0000000')
     thl_bot.tofile(f'{domain.work_dir}/thl_bot_in.0000000')
@@ -487,7 +487,8 @@ def main():
 
     else:
         # Read base state density from parent. They *must* be identical.
-        bs = read_moist_basestate(f'{domain.parent.work_dir}/thermo_basestate.0000000')
+        bs = read_moist_basestate(
+            f'{domain.parent.work_dir}/thermo_basestate.0000000', settings.float_type)
 
         # Interpolate / link fields from parent to child domain.
         create_init_and_bcs_inner(domain, bs, settings.vgrid)

@@ -36,7 +36,7 @@ from microhhpy.utils import check_domain_decomposition
 Case settings.
 """
 float_type = np.float32
-sw_debug = False     # Small debug/test domain.
+sw_debug = True      # Small debug/test domain.
 sw_ls = "no_geo"     # no_geo, 1d_geo, 3d_geo
 
 # Location MMIJ tower.
@@ -79,7 +79,7 @@ env_ecmwf = {
     'work_path': f'{scratch}/mmij_v1/',
 }
 
-env = env_snellius
+env = env_eddy
 
 
 """
